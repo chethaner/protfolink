@@ -1,16 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
 const Chatbot = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
-        {
-            role: 'assistant',
-            content: '👋 Hi! I\'m your Portfolink AI Assistant! I can help you with:\n\n• Resume writing tips\n• Career advice\n• Portfolio suggestions\n• Job search strategies\n\nHow can I help you today?'
-        }
+        { role: 'assistant', content: 'Hi! I\'m your AI career assistant. Ask me anything about your portfolio, career goals, or job search!' }
     ]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
+    const [position, setPosition] = useState({ x: window.innerWidth - 400, y: window.innerHeight - 600 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+    const chatRef = useRef(null);
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => {
@@ -21,15 +23,41 @@ const Chatbot = () => {
         scrollToBottom();
     }, [messages]);
 
-    const quickQuestions = [
-        '💡 How do I write a good resume?',
-        '🎯 What should I include in my portfolio?',
-        '📝 Tips for ATS optimization',
-        '🚀 How to stand out to recruiters?'
-    ];
+    const handleMouseDown = (e) => {
+        if (e.target.closest('.chat-content')) return; // Don't drag when clicking chat content
+        setIsDragging(true);
+        setDragOffset({
+            x: e.clientX - position.x,
+            y: e.clientY - position.y
+        });
+    };
 
-    const handleSend = async () => {
-        if (!input.trim()) return;
+    const handleMouseMove = (e) => {
+        if (!isDragging) return;
+
+        const newX = Math.max(0, Math.min(e.clientX - dragOffset.x, window.innerWidth - 400));
+        const newY = Math.max(0, Math.min(e.clientY - dragOffset.y, window.innerHeight - 100));
+
+        setPosition({ x: newX, y: newY });
+    };
+
+    const handleMouseUp = () => {
+        setIsDragging(false);
+    };
+
+    useEffect(() => {
+        if (isDragging) {
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseup', handleMouseUp);
+            return () => {
+                window.removeEventListener('mousemove', handleMouseMove);
+                window.removeEventListener('mouseup', handleMouseUp);
+            };
+        }
+    }, [isDragging, dragOffset]);
+
+    const sendMessage = async () => {
+        if (!input.trim() || loading) return;
 
         const userMessage = { role: 'user', content: input };
         setMessages([...messages, userMessage]);
@@ -37,78 +65,92 @@ const Chatbot = () => {
         setLoading(true);
 
         try {
-            const { data } = await axios.post('/api/chatbot/chat', {
+            const { data } = await axios.post('/api/ai/chat', {
                 message: input,
-                history: messages
+                context: messages
             });
 
-            setMessages(prev => [...prev, {
-                role: 'assistant',
-                content: data.response
-            }]);
+            setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
         } catch (error) {
+            console.error('Chat error:', error);
+            toast.error('Failed to get response');
             setMessages(prev => [...prev, {
                 role: 'assistant',
-                content: '❌ Sorry, I encountered an error. Please try again or contact support.'
+                content: 'Sorry, I encountered an error. Please try again.'
             }]);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleQuickQuestion = (question) => {
-        setInput(question.replace(/^[^\s]+\s/, '')); // Remove emoji
-    };
-
     const handleKeyPress = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            handleSend();
+            sendMessage();
         }
     };
 
     return (
         <>
-            {/* Chatbot Button */}
+            {/* Floating Chat Button */}
             {!isOpen && (
                 <button
                     onClick={() => setIsOpen(true)}
-                    className="fixed bottom-6 right-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-110 transition duration-300 z-50 animate-bounce"
-                    title="Open AI Assistant"
+                    className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 rounded-full shadow-2xl hover:shadow-3xl transition transform hover:scale-110"
+                    title="Open AI Chat Assistant"
                 >
-                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="width" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                     </svg>
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                        AI
+                    </span>
                 </button>
             )}
 
-            {/* Chatbot Window */}
+            {/* Draggable Chat Window */}
             {isOpen && (
-                <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col z-50 animate-fadeIn border-2 border-purple-200">
-                    {/* Header */}
-                    <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 rounded-t-2xl flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                                🤖
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-lg">AI Assistant</h3>
-                                <p className="text-xs text-white/80">Always here to help</p>
-                            </div>
+                <div
+                    ref={chatRef}
+                    className="fixed z-50 bg-white rounded-2xl shadow-2xl overflow-hidden"
+                    style={{
+                        left: `${position.x}px`,
+                        top: `${position.y}px`,
+                        width: '380px',
+                        height: '550px',
+                        cursor: isDragging ? 'grabbing' : 'grab'
+                    }}
+                >
+                    {/* Header - Draggable */}
+                    <div
+                        onMouseDown={handleMouseDown}
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-4 flex items-center justify-between"
+                    >
+                        <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                            <h3 className="font-bold text-lg">AI Career Assistant</h3>
                         </div>
-                        <button
-                            onClick={() => setIsOpen(false)}
-                            className="text-white hover:bg-white/20 p-2 rounded-lg transition"
-                        >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setMessages([messages[0]])}
+                                className="text-white/80 hover:text-white transition"
+                                title="Clear chat"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                            <button
+                                onClick={() => setIsOpen(false)}
+                                className="text-white/80 hover:text-white transition text-2xl leading-none"
+                            >
+                                ✕
+                            </button>
+                        </div>
                     </div>
 
-                    {/* Messages */}
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                    {/* Messages - Not Draggable */}
+                    <div className="chat-content flex flex-col h-[calc(100%-140px)] overflow-y-auto p-4 space-y-3 bg-gray-50">
                         {messages.map((msg, index) => (
                             <div
                                 key={index}
@@ -116,8 +158,8 @@ const Chatbot = () => {
                             >
                                 <div
                                     className={`max-w-[80%] p-3 rounded-2xl ${msg.role === 'user'
-                                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
-                                            : 'bg-white text-gray-800 shadow-md border border-gray-200'
+                                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-br-none'
+                                            : 'bg-white text-gray-800 rounded-bl-none shadow-md'
                                         }`}
                                 >
                                     <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
@@ -126,11 +168,11 @@ const Chatbot = () => {
                         ))}
                         {loading && (
                             <div className="flex justify-start">
-                                <div className="bg-white p-3 rounded-2xl shadow-md border border-gray-200">
-                                    <div className="flex gap-2">
-                                        <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce"></div>
-                                        <div className="w-2 h-2 bg-pink-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                                        <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                                <div className="bg-white p-3 rounded-2xl rounded-bl-none shadow-md">
+                                    <div className="flex gap-1">
+                                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                                     </div>
                                 </div>
                             </div>
@@ -138,26 +180,8 @@ const Chatbot = () => {
                         <div ref={messagesEndRef} />
                     </div>
 
-                    {/* Quick Questions */}
-                    {messages.length === 1 && (
-                        <div className="p-3 border-t border-gray-200 bg-white">
-                            <p className="text-xs text-gray-600 mb-2 font-medium">Quick questions:</p>
-                            <div className="grid grid-cols-2 gap-2">
-                                {quickQuestions.map((q, i) => (
-                                    <button
-                                        key={i}
-                                        onClick={() => handleQuickQuestion(q)}
-                                        className="text-xs bg-purple-50 hover:bg-purple-100 text-purple-700 p-2 rounded-lg transition text-left"
-                                    >
-                                        {q}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Input */}
-                    <div className="p-4 border-t border-gray-200 bg-white rounded-b-2xl">
+                    {/* Input Area - Not Draggable */}
+                    <div className="chat-content absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
                         <div className="flex gap-2">
                             <input
                                 type="text"
@@ -165,19 +189,22 @@ const Chatbot = () => {
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyPress={handleKeyPress}
                                 placeholder="Ask me anything..."
-                                className="flex-1 px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-100 outline-none transition"
+                                className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500"
                                 disabled={loading}
                             />
                             <button
-                                onClick={handleSend}
+                                onClick={sendMessage}
                                 disabled={loading || !input.trim()}
-                                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-2 rounded-xl hover:from-purple-700 hover:to-pink-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-2 rounded-full hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                                 </svg>
                             </button>
                         </div>
+                        <p className="text-xs text-gray-500 mt-2 text-center">
+                            💡 Drag the header to move the chat window
+                        </p>
                     </div>
                 </div>
             )}

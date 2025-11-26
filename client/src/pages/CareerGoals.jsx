@@ -6,8 +6,8 @@ import { toast } from 'react-hot-toast';
 const CareerGoals = () => {
     const [goals, setGoals] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [creating, setCreating] = useState(false);
     const [showCreateForm, setShowCreateForm] = useState(false);
-    const [motivation, setMotivation] = useState('');
     const [formData, setFormData] = useState({
         title: '',
         targetRole: '',
@@ -31,14 +31,25 @@ const CareerGoals = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        console.log('Submitting career goal:', formData);
+
+        setCreating(true);
+        toast.loading('Creating goal with AI-generated steps...', { id: 'creating-goal' });
+
         try {
             const { data } = await axios.post('/api/career/goals', formData);
+            console.log('Career goal created:', data);
             setGoals([data, ...goals]);
             setShowCreateForm(false);
             setFormData({ title: '', targetRole: '', deadline: '' });
-            toast.success('Career goal created!');
+            toast.success('Career goal created!', { id: 'creating-goal' });
         } catch (error) {
-            toast.error('Failed to create goal');
+            console.error('Failed to create goal:', error);
+            console.error('Error response:', error.response?.data);
+            const errorMessage = error.response?.data?.message || 'Failed to create goal';
+            toast.error(errorMessage, { id: 'creating-goal' });
+        } finally {
+            setCreating(false);
         }
     };
 
@@ -71,7 +82,8 @@ const CareerGoals = () => {
                 <div className="mb-6">
                     <button
                         onClick={() => setShowCreateForm(!showCreateForm)}
-                        className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition flex items-center gap-2"
+                        disabled={creating}
+                        className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <span>+</span> Create New Goal
                     </button>
@@ -91,6 +103,7 @@ const CareerGoals = () => {
                                     className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
                                     placeholder="e.g., Become a Full Stack Developer"
                                     required
+                                    disabled={creating}
                                 />
                             </div>
                             <div>
@@ -100,6 +113,7 @@ const CareerGoals = () => {
                                     onChange={(e) => setFormData({ ...formData, targetRole: e.target.value })}
                                     className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
                                     required
+                                    disabled={creating}
                                 >
                                     <option value="">Select a role...</option>
                                     <option value="Full Stack Developer">Full Stack Developer</option>
@@ -116,16 +130,28 @@ const CareerGoals = () => {
                                     value={formData.deadline}
                                     onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
                                     className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500"
+                                    disabled={creating}
                                 />
                             </div>
+                            {creating && (
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
+                                    <p className="font-semibold mb-1">⏳ Generating AI career steps...</p>
+                                    <p className="text-xs">This may take 10-30 seconds. Please wait.</p>
+                                </div>
+                            )}
                             <div className="flex gap-4">
-                                <button type="submit" className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700">
-                                    Create Goal
+                                <button
+                                    type="submit"
+                                    disabled={creating}
+                                    className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                >
+                                    {creating ? 'Creating...' : 'Create Goal'}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setShowCreateForm(false)}
-                                    className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400"
+                                    disabled={creating}
+                                    className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition"
                                 >
                                     Cancel
                                 </button>
@@ -147,8 +173,8 @@ const CareerGoals = () => {
                                 <div className="flex justify-between items-start mb-4">
                                     <h3 className="text-xl font-bold text-gray-900">{goal.title}</h3>
                                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${goal.status === 'active' ? 'bg-green-100 text-green-800' :
-                                        goal.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                                            'bg-gray-100 text-gray-800'
+                                            goal.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                                                'bg-gray-100 text-gray-800'
                                         }`}>
                                         {goal.status}
                                     </span>

@@ -5,15 +5,15 @@ const aiService = require('../services/aiService');
 // @access  Private
 exports.improveText = async (req, res) => {
     try {
-        const { text, instruction = 'improve' } = req.body;
+        const { text, action = 'improve' } = req.body;
 
         if (!text) {
             return res.status(400).json({ message: 'Text is required' });
         }
 
-        const improved = await aiService.improveText(text, instruction);
+        const improvedText = await aiService.improveText(text, action);
 
-        res.json({ improved });
+        res.json({ improvedText });
     } catch (error) {
         console.error('AI improve error:', error);
         res.status(500).json({ message: 'AI service error', error: error.message });
@@ -97,5 +97,42 @@ exports.convertToBullets = async (req, res) => {
     } catch (error) {
         console.error('AI bullets error:', error);
         res.status(500).json({ message: 'AI service error', error: error.message });
+    }
+};
+
+// @desc    Chat with AI assistant
+// @route   POST /api/ai/chat
+// @access  Private
+exports.chat = async (req, res) => {
+    try {
+        const { message, context = [] } = req.body;
+
+        if (!message) {
+            return res.status(400).json({ message: 'Message is required' });
+        }
+
+        // Build conversation context
+        const conversationHistory = context.slice(-5); // Keep last 5 messages for context
+
+        // Create a prompt for the AI
+        const prompt = `You are a helpful AI career assistant for PORTFOLINK, a portfolio and resume builder platform. 
+        
+Previous conversation:
+${conversationHistory.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
+
+User: ${message}
+
+Provide a helpful, concise response about portfolios, resumes, career advice, or job search tips. Be friendly and professional.`;
+
+        const response = await aiService.generateText(prompt);
+
+        res.json({ response });
+    } catch (error) {
+        console.error('AI chat error:', error);
+        res.status(500).json({
+            message: 'AI service error',
+            error: error.message,
+            response: "I'm having trouble connecting right now. Please try again in a moment!"
+        });
     }
 };

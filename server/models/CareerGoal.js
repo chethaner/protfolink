@@ -32,6 +32,10 @@ const CareerGoalSchema = new mongoose.Schema({
         completedAt: Date
     }],
     skillsToLearn: [String],
+    lastMotivation: {
+        type: String,
+        default: ''
+    },
     progress: {
         type: Number,
         default: 0,

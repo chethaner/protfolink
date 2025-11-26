@@ -27,7 +27,7 @@ const Achievements = ({ data = [], onChange }) => {
     return (
         <div className="space-y-6">
             {achievements.map((achievement, index) => (
-                <div key={index} className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                <div key={index} className="p-6 border border-gray-200 rounded-lg bg-white shadow-sm">
                     <div className="space-y-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -37,7 +37,7 @@ const Achievements = ({ data = [], onChange }) => {
                                 type="text"
                                 value={achievement.title}
                                 onChange={(e) => updateAchievement(index, 'title', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                 placeholder="e.g., Won 1st Prize in Hackathon"
                             />
                         </div>
@@ -48,7 +48,7 @@ const Achievements = ({ data = [], onChange }) => {
                             <textarea
                                 value={achievement.description}
                                 onChange={(e) => updateAchievement(index, 'description', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                 rows="3"
                                 placeholder="Describe your achievement..."
                             />
@@ -61,13 +61,14 @@ const Achievements = ({ data = [], onChange }) => {
                                 type="text"
                                 value={achievement.date}
                                 onChange={(e) => updateAchievement(index, 'date', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                 placeholder="e.g., March 2023"
                             />
                         </div>
+
                         <button
                             onClick={() => removeAchievement(index)}
-                            className="text-red-600 hover:text-red-800 text-sm font-medium"
+                            className="text-red-600 hover:text-red-800 text-sm font-medium mt-4"
                         >
                             Remove Achievement
                         </button>
@@ -77,7 +78,7 @@ const Achievements = ({ data = [], onChange }) => {
 
             <button
                 onClick={addAchievement}
-                className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-600 transition"
+                className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-purple-500 hover:text-purple-600 transition font-medium"
             >
                 + Add Achievement
             </button>

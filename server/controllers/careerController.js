@@ -7,10 +7,16 @@ const aiService = require('../services/aiService');
 // @access  Private
 exports.createGoal = async (req, res) => {
     try {
-        const { title } = req.body;
+        const { title, targetRole, deadline } = req.body;
+
+        console.log('Creating career goal:', { title, targetRole, deadline, userId: req.user.id });
 
         if (!title) {
             return res.status(400).json({ message: 'Goal title is required' });
+        }
+
+        if (!targetRole) {
+            return res.status(400).json({ message: 'Target role is required' });
         }
 
         // Get user's portfolio for context
@@ -21,12 +27,18 @@ exports.createGoal = async (req, res) => {
             education: portfolio.content.education || []
         } : {};
 
-        // Generate steps using AI
+        console.log('Generating AI steps for goal:', title);
+
+        // Generate steps using AI (with fallback)
         const steps = await aiService.generateCareerSteps(title, userProfile);
+
+        console.log('AI steps generated:', steps.length, 'steps');
 
         const goal = await CareerGoal.create({
             user: req.user.id,
             title,
+            targetRole,
+            deadline: deadline || undefined,
             steps: steps.map(step => ({
                 title: step.title,
                 description: step.description,
@@ -34,12 +46,16 @@ exports.createGoal = async (req, res) => {
             }))
         });
 
+        console.log('Career goal created successfully:', goal._id);
+
         res.status(201).json(goal);
     } catch (error) {
         console.error('Create goal error:', error);
+        console.error('Error stack:', error.stack);
         res.status(500).json({ message: 'Failed to create goal', error: error.message });
     }
 };
+
 
 // @desc    Get all career goals for user
 // @route   GET /api/career/goals
@@ -79,7 +95,7 @@ exports.getGoal = async (req, res) => {
 // @access  Private
 exports.updateGoal = async (req, res) => {
     try {
-        const { stepIndex, completed, title } = req.body;
+        const { steps, status, title } = req.body;
 
         const goal = await CareerGoal.findById(req.params.id);
 
@@ -91,19 +107,14 @@ exports.updateGoal = async (req, res) => {
             return res.status(401).json({ message: 'Not authorized' });
         }
 
-        // Update title if provided
-        if (title) {
-            goal.title = title;
-        }
-
-        // Update step progress if provided
-        if (stepIndex !== undefined) {
-            goal.steps[stepIndex].completed = completed;
-        }
+        // Update fields if provided
+        if (title) goal.title = title;
+        if (status) goal.status = status;
+        if (steps) goal.steps = steps;
 
         // Calculate progress
         const completedSteps = goal.steps.filter(s => s.completed).length;
-        goal.progress = Math.round((completedSteps / goal.steps.length) * 100);
+        goal.progress = goal.steps.length > 0 ? Math.round((completedSteps / goal.steps.length) * 100) : 0;
 
         await goal.save();
 
@@ -137,7 +148,7 @@ exports.deleteGoal = async (req, res) => {
 };
 
 // @desc    Get AI motivation
-// @route   GET /api/career/motivation/:id
+// @route   POST /api/career/motivation/:id
 // @access  Private
 exports.getMotivation = async (req, res) => {
     try {
@@ -153,7 +164,11 @@ exports.getMotivation = async (req, res) => {
 
         const motivation = await aiService.generateMotivation(goal.title, goal.progress);
 
-        res.json({ motivation });
+        // Save motivation to database for persistence
+        goal.lastMotivation = motivation;
+        await goal.save();
+
+        res.json({ message: motivation });
     } catch (error) {
         console.error('Motivation error:', error);
         res.status(500).json({ message: 'Failed to generate motivation', error: error.message });

@@ -19,6 +19,10 @@ const CareerGoalDetail = () => {
         try {
             const { data } = await axios.get(`/api/career/goals/${id}`);
             setGoal(data);
+            // Load saved motivation if it exists
+            if (data.lastMotivation) {
+                setMotivation(data.lastMotivation);
+            }
         } catch (error) {
             toast.error('Failed to load goal');
             navigate('/career');
@@ -48,6 +52,7 @@ const CareerGoalDetail = () => {
         try {
             const { data } = await axios.post(`/api/career/motivation/${id}`);
             setMotivation(data.message);
+            toast.success('Motivation generated!');
         } catch (error) {
             toast.error('Failed to get motivation');
         } finally {
@@ -187,25 +192,7 @@ const CareerGoalDetail = () => {
                                                 }`}>
                                                 {step.title}
                                             </h3>
-                                            <p className="text-gray-700 mb-3">{step.description}</p>
-
-                                            <div className="flex flex-wrap gap-4 text-sm">
-                                                <span className="text-purple-600 font-medium">
-                                                    ⏱ {step.timeframe}
-                                                </span>
-                                                {step.resources && step.resources.length > 0 && (
-                                                    <div className="flex gap-2">
-                                                        <span className="text-gray-600">📚 Resources:</span>
-                                                        <div className="flex flex-wrap gap-2">
-                                                            {step.resources.map((resource, i) => (
-                                                                <span key={i} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
-                                                                    {resource}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
+                                            <p className="text-gray-700">{step.description}</p>
                                         </div>
                                     </div>
                                 </div>

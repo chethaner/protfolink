@@ -5,7 +5,8 @@ import { toast } from 'react-hot-toast';
 import debounce from 'lodash.debounce';
 import Sidebar from '../components/editor/Sidebar';
 import TemplateSelector from '../components/editor/TemplateSelector';
-import LinkedInImport from '../components/LinkedInImport';
+import AIAssistant from '../components/editor/AIAssistant';
+
 import PersonalInfo from '../components/editor/sections/PersonalInfo';
 import Experience from '../components/editor/sections/Experience';
 import Education from '../components/editor/sections/Education';
@@ -23,6 +24,8 @@ const Editor = () => {
     const [loading, setLoading] = useState(true);
     const [activeSection, setActiveSection] = useState('personal');
     const [isSaving, setIsSaving] = useState(false);
+    const [selectedText, setSelectedText] = useState('');
+    const [activeField, setActiveField] = useState(null);
 
     useEffect(() => {
         fetchPortfolio();
@@ -73,13 +76,7 @@ const Editor = () => {
             <div className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-gray-800">{portfolio?.title || 'Portfolio Editor'}</h1>
                 <div className="flex items-center gap-4">
-                    <LinkedInImport
-                        portfolioId={id}
-                        onImportComplete={(data) => {
-                            setPortfolio(data.portfolio);
-                            toast.success('Data imported successfully!');
-                        }}
-                    />
+
                     <TemplateSelector
                         currentTemplate={portfolio?.template || 'modern'}
                         onTemplateChange={handleTemplateChange}
@@ -184,6 +181,19 @@ const Editor = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Floating AI Assistant */}
+            <AIAssistant
+                text={selectedText}
+                onApply={(improvedText) => {
+                    // Update the active field with improved text
+                    if (activeField) {
+                        // This will be handled by the section components
+                        toast.success('Text improved! Paste it into your field.');
+                        navigator.clipboard.writeText(improvedText);
+                    }
+                }}
+            />
         </div>
     );
 };

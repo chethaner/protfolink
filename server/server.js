@@ -8,7 +8,8 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cors({
     origin: 'http://localhost:5173', // Vite default port
     credentials: true
@@ -31,7 +32,6 @@ app.use('/api/ats', require('./routes/atsRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/jobs', require('./routes/jobRoutes'));
 app.use('/api/chatbot', require('./routes/chatbotRoutes'));
-app.use('/api/linkedin', require('./routes/linkedinRoutes'));
 
 app.get('/', (req, res) => {
     res.send('Portfolink API is running');

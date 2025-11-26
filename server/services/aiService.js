@@ -3,7 +3,7 @@ const axios = require('axios');
 
 // Ollama configuration
 const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
-const ollamaModel = process.env.OLLAMA_MODEL || 'llama3.2';
+const ollamaModel = process.env.OLLAMA_MODEL || 'llama3.2:latest';
 
 let ollamaAvailable = false;
 
@@ -33,10 +33,16 @@ async function generateWithOllama(prompt) {
             prompt: prompt,
             stream: false
         }, {
-            timeout: 30000 // 30 second timeout
+        }, {
+            timeout: 60000 // 60 second timeout (increased for initial load)
         });
         return response.data.response;
     } catch (error) {
+        console.error('Ollama Generation Error:', error.message);
+        if (error.response) {
+            console.error('Ollama Response Status:', error.response.status);
+            console.error('Ollama Response Data:', error.response.data);
+        }
         throw new Error(`Ollama error: ${error.message}`);
     }
 }
@@ -93,7 +99,13 @@ Provide 5-7 actionable steps in JSON format:
 
 Return ONLY the JSON array, no additional text.`;
 
-    const response = await generateText(prompt);
+    let response;
+    try {
+        response = await generateText(prompt);
+    } catch (error) {
+        console.error('AI generation failed, using fallback:', error);
+        return getFallbackSteps(goalTitle);
+    }
 
     try {
         const jsonMatch = response.match(/\[[\s\S]*\]/);
@@ -103,28 +115,34 @@ Return ONLY the JSON array, no additional text.`;
         throw new Error('Invalid JSON response');
     } catch (error) {
         console.error('Failed to parse career steps:', error);
-        return [
-            {
-                title: "Research and Learn",
-                description: `Study the requirements and skills needed for ${goalTitle}`,
-                timeframe: "1-2 months",
-                resources: ["Online courses", "Industry blogs", "Professional networks"]
-            },
-            {
-                title: "Build Skills",
-                description: "Develop the necessary technical and soft skills",
-                timeframe: "3-6 months",
-                resources: ["Practice projects", "Certifications", "Mentorship"]
-            },
-            {
-                title: "Gain Experience",
-                description: "Apply your skills in real-world scenarios",
-                timeframe: "6-12 months",
-                resources: ["Freelance work", "Open source", "Internships"]
-            }
-        ];
+        return getFallbackSteps(goalTitle);
     }
 }
+
+function getFallbackSteps(goalTitle) {
+    return [
+        {
+            title: "Research and Learn",
+            description: `Study the requirements and skills needed for ${goalTitle}`,
+            timeframe: "1-2 months",
+            resources: ["Online courses", "Industry blogs", "Professional networks"]
+        },
+        {
+            title: "Build Skills",
+            description: "Develop the necessary technical and soft skills",
+            timeframe: "3-6 months",
+            resources: ["Practice projects", "Certifications", "Mentorship"]
+        },
+        {
+            title: "Gain Experience",
+            description: "Apply your skills in real-world scenarios",
+            timeframe: "6-12 months",
+            resources: ["Freelance work", "Open source", "Internships"]
+        }
+    ];
+}
+
+
 
 // Suggest skills for career goal
 async function suggestSkills(goalTitle, currentSkills = []) {

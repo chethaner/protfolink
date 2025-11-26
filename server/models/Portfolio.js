@@ -71,7 +71,11 @@ const portfolioSchema = new mongoose.Schema({
             issuer: String,
             date: String,
             credentialId: String,
-            link: String
+            link: String,
+            images: [{
+                data: String,
+                caption: String
+            }]
         }],
         achievements: [{
             title: String,
