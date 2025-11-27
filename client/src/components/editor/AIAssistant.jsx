@@ -11,26 +11,33 @@ const AIAssistant = ({ text, onApply }) => {
     const buttonRef = useRef(null);
 
     const improveText = async (action) => {
-        if (!text || !text.trim()) {
-            toast.error('Please enter some text first');
+        // Get selected text from the page
+        const selectedText = window.getSelection().toString().trim();
+
+        if (!selectedText) {
+            toast.error('Please select some text first');
             return;
         }
 
         setLoading(true);
-        toast.loading('Improving text with AI...', { id: 'ai-improve' });
-
         try {
             const { data } = await axios.post('/api/ai/improve', {
-                text,
+                text: selectedText,
                 action
-            });
+            }, { withCredentials: true });
 
-            onApply(data.improvedText);
-            toast.success('Text improved!', { id: 'ai-improve' });
-            setShowPanel(false);
+            toast.success('Text improved! Copied to clipboard.');
+
+            // Copy to clipboard
+            await navigator.clipboard.writeText(data.improvedText);
+
+            // Call onApply if provided
+            if (onApply) {
+                onApply(data.improvedText);
+            }
         } catch (error) {
-            console.error('AI improvement error:', error);
-            toast.error(error.response?.data?.message || 'Failed to improve text', { id: 'ai-improve' });
+            console.error('AI improve error:', error);
+            toast.error('Failed to improve text. Make sure Ollama is running.');
         } finally {
             setLoading(false);
         }
@@ -92,85 +99,70 @@ const AIAssistant = ({ text, onApply }) => {
 
             {showPanel && (
                 <div className="ai-panel absolute top-full mt-2 left-0 bg-white border border-gray-200 rounded-xl shadow-2xl p-5 w-72">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-bold text-gray-900 text-lg">✨ Improve with AI</h3>
-                        <button
-                            onClick={() => setShowPanel(false)}
-                            className="text-gray-400 hover:text-gray-600 text-xl"
-                        >
-                            ✕
-                        </button>
+                    <div className="mb-4">
+                        <h3 className="font-bold text-gray-900 mb-1">AI Text Improver</h3>
+                        <p className="text-xs text-gray-500">Select text and click an action</p>
                     </div>
 
                     <div className="space-y-2">
                         <button
                             onClick={() => improveText('improve')}
                             disabled={loading}
-                            className="w-full text-left px-4 py-3 text-sm bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 rounded-lg transition disabled:opacity-50 border border-blue-200"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                         >
-                            <div className="flex items-center gap-2">
-                                <span className="text-lg">✨</span>
-                                <span className="font-medium">Improve Text</span>
-                            </div>
+                            <span>✨</span>
+                            <span>Improve Text</span>
                         </button>
 
                         <button
                             onClick={() => improveText('professional')}
                             disabled={loading}
-                            className="w-full text-left px-4 py-3 text-sm bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 rounded-lg transition disabled:opacity-50 border border-purple-200"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                         >
-                            <div className="flex items-center gap-2">
-                                <span className="text-lg">💼</span>
-                                <span className="font-medium">Make Professional</span>
-                            </div>
+                            <span>💼</span>
+                            <span>Make Professional</span>
                         </button>
 
                         <button
                             onClick={() => improveText('shorten')}
                             disabled={loading}
-                            className="w-full text-left px-4 py-3 text-sm bg-gradient-to-r from-orange-50 to-red-50 hover:from-orange-100 hover:to-red-100 rounded-lg transition disabled:opacity-50 border border-orange-200"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                         >
-                            <div className="flex items-center gap-2">
-                                <span className="text-lg">✂️</span>
-                                <span className="font-medium">Make Shorter</span>
-                            </div>
+                            <span>✂️</span>
+                            <span>Make Shorter</span>
                         </button>
 
                         <button
                             onClick={() => improveText('expand')}
                             disabled={loading}
-                            className="w-full text-left px-4 py-3 text-sm bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 rounded-lg transition disabled:opacity-50 border border-green-200"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                         >
-                            <div className="flex items-center gap-2">
-                                <span className="text-lg">📝</span>
-                                <span className="font-medium">Expand Details</span>
-                            </div>
+                            <span>📝</span>
+                            <span>Expand Details</span>
                         </button>
 
                         <button
                             onClick={() => improveText('bullets')}
                             disabled={loading}
-                            className="w-full text-left px-4 py-3 text-sm bg-gradient-to-r from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100 rounded-lg transition disabled:opacity-50 border border-yellow-200"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-lg hover:from-pink-600 hover:to-pink-700 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                         >
-                            <div className="flex items-center gap-2">
-                                <span className="text-lg">•</span>
-                                <span className="font-medium">Convert to Bullets</span>
-                            </div>
+                            <span>•</span>
+                            <span>Convert to Bullets</span>
                         </button>
                     </div>
 
                     {loading && (
                         <div className="mt-4 text-center">
-                            <div className="inline-flex items-center gap-2 text-sm text-purple-600">
-                                <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-600 border-t-transparent"></div>
-                                <span>Processing...</span>
+                            <div className="inline-flex items-center gap-2 text-sm text-gray-600">
+                                <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                                <span>Improving...</span>
                             </div>
                         </div>
                     )}
 
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                        <p className="text-xs text-gray-500 text-center">
-                            💡 Select text in any field, then use AI to improve it
+                    <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-xs text-blue-800">
+                            💡 Highlight any text on the page, then click a button
                         </p>
                     </div>
                 </div>

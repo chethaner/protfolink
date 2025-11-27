@@ -38,7 +38,10 @@ const CorporateTemplate = ({ portfolio }) => {
                         {content.personalInfo?.summary && (
                             <div className="mb-8 bg-blue-50 p-6 rounded-lg border-l-4 border-blue-900">
                                 <h2 className="text-xl font-bold text-blue-900 mb-3">PROFESSIONAL SUMMARY</h2>
-                                <div className="text-gray-700 leading-relaxed">{formatText(content.personalInfo.summary)}</div>
+                                <div
+                                    className="text-gray-700 leading-relaxed prose prose-sm max-w-none"
+                                    dangerouslySetInnerHTML={{ __html: content.personalInfo.summary }}
+                                />
                             </div>
                         )}
 
@@ -57,7 +60,10 @@ const CorporateTemplate = ({ portfolio }) => {
                                                 {exp.startDate} - {exp.endDate || 'Present'}
                                             </span>
                                         </div>
-                                        <div className="text-gray-700">{formatText(exp.description)}</div>
+                                        <div
+                                            className="text-gray-700 prose prose-sm max-w-none"
+                                            dangerouslySetInnerHTML={{ __html: exp.description }}
+                                        />
                                     </div>
                                 ))}
                             </div>
@@ -148,6 +154,35 @@ const CorporateTemplate = ({ portfolio }) => {
                                         </div>
                                     </div>
                                 ))}
+                            </div>
+                        )}
+
+                        {/* Languages */}
+                        {content.languages?.length > 0 && (
+                            <div className="mb-8">
+                                <h2 className="text-xl font-bold text-blue-900 mb-4 uppercase border-b-2 border-blue-900 pb-2">Languages</h2>
+                                <div className="grid grid-cols-2 gap-4">
+                                    {content.languages.map((language, index) => (
+                                        <div key={index} className="flex justify-between items-center bg-blue-50 p-3 rounded">
+                                            <span className="font-semibold text-gray-900">{language.name}</span>
+                                            <span className="text-sm text-blue-900">{language.proficiency}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Interests */}
+                        {content.interests?.length > 0 && (
+                            <div className="mb-8">
+                                <h2 className="text-xl font-bold text-blue-900 mb-4 uppercase border-b-2 border-blue-900 pb-2">Interests</h2>
+                                <div className="flex flex-wrap gap-2">
+                                    {content.interests.map((interest, index) => (
+                                        <span key={index} className="bg-blue-100 text-blue-900 px-4 py-2 rounded font-semibold">
+                                            {interest}
+                                        </span>
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>

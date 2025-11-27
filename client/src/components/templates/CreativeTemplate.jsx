@@ -74,7 +74,10 @@ const CreativeTemplate = ({ portfolio }) => {
                             {content.personalInfo?.summary && (
                                 <div className="mb-8">
                                     <h2 className="text-2xl font-bold text-gray-900 mb-3 text-pink-600">About Me</h2>
-                                    <div className="text-gray-700 leading-relaxed">{formatText(content.personalInfo.summary)}</div>
+                                    <div
+                                        className="text-gray-700 leading-relaxed prose prose-sm max-w-none"
+                                        dangerouslySetInnerHTML={{ __html: content.personalInfo.summary }}
+                                    />
                                 </div>
                             )}
 
@@ -88,7 +91,10 @@ const CreativeTemplate = ({ portfolio }) => {
                                             <h3 className="text-xl font-bold text-gray-900">{exp.position}</h3>
                                             <p className="text-pink-600 font-semibold">{exp.company}</p>
                                             <p className="text-sm text-gray-600 mb-2">{exp.startDate} - {exp.endDate || 'Present'}</p>
-                                            <div className="text-gray-700">{formatText(exp.description)}</div>
+                                            <div
+                                                className="text-gray-700 prose prose-sm max-w-none"
+                                                dangerouslySetInnerHTML={{ __html: exp.description }}
+                                            />
                                         </div>
                                     ))}
                                 </div>
@@ -171,7 +177,10 @@ const CreativeTemplate = ({ portfolio }) => {
                                         {content.projects.map((project, index) => (
                                             <div key={index} className="bg-gradient-to-r from-pink-50 to-purple-50 p-4 rounded-xl">
                                                 <h3 className="text-lg font-bold text-gray-900">{project.name}</h3>
-                                                <div className="text-gray-700 text-sm">{formatText(project.description)}</div>
+                                                <div
+                                                    className="text-gray-700 text-sm prose prose-sm max-w-none"
+                                                    dangerouslySetInnerHTML={{ __html: project.description }}
+                                                />
                                             </div>
                                         ))}
                                     </div>
@@ -179,6 +188,35 @@ const CreativeTemplate = ({ portfolio }) => {
                             )}
                         </div>
                     </div>
+
+                    {/* Languages */}
+                    {content.languages?.length > 0 && (
+                        <div className="mb-8">
+                            <h2 className="text-2xl font-bold text-pink-600 mb-4">Languages</h2>
+                            <div className="grid grid-cols-2 gap-4">
+                                {content.languages.map((language, index) => (
+                                    <div key={index} className="flex justify-between items-center bg-pink-50 p-3 rounded-xl">
+                                        <span className="font-semibold text-gray-900">{language.name}</span>
+                                        <span className="text-sm text-pink-600">{language.proficiency}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Interests */}
+                    {content.interests?.length > 0 && (
+                        <div className="mb-8">
+                            <h2 className="text-2xl font-bold text-pink-600 mb-4">Interests</h2>
+                            <div className="flex flex-wrap gap-2">
+                                {content.interests.map((interest, index) => (
+                                    <span key={index} className="bg-gradient-to-r from-pink-100 to-purple-100 text-pink-800 px-4 py-2 rounded-full text-sm font-medium">
+                                        {interest}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 

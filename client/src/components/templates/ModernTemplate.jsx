@@ -43,11 +43,13 @@ const ModernTemplate = ({ portfolio }) => {
                 </div>
 
                 <div className="p-8">
-                    {/* Summary */}
                     {content.personalInfo?.summary && (
                         <div className="mb-8">
                             <h2 className="text-2xl font-bold text-gray-900 mb-3 border-b-2 border-indigo-600 pb-2">About Me</h2>
-                            <div className="text-gray-700 leading-relaxed">{formatText(content.personalInfo.summary)}</div>
+                            <div
+                                className="text-gray-700 leading-relaxed prose prose-sm max-w-none"
+                                dangerouslySetInnerHTML={{ __html: content.personalInfo.summary }}
+                            />
                         </div>
                     )}
 
@@ -60,7 +62,10 @@ const ModernTemplate = ({ portfolio }) => {
                                     <h3 className="text-xl font-bold text-gray-900">{exp.position}</h3>
                                     <p className="text-indigo-600 font-semibold">{exp.company}</p>
                                     <p className="text-sm text-gray-600 mb-2">{exp.startDate} - {exp.endDate || 'Present'}</p>
-                                    <div className="text-gray-700">{formatText(exp.description)}</div>
+                                    <div
+                                        className="text-gray-700 prose prose-sm max-w-none"
+                                        dangerouslySetInnerHTML={{ __html: exp.description }}
+                                    />
                                 </div>
                             ))}
                         </div>
@@ -106,7 +111,10 @@ const ModernTemplate = ({ portfolio }) => {
                             {content.projects.map((project, index) => (
                                 <div key={index} className="mb-4">
                                     <h3 className="text-xl font-bold text-gray-900">{project.name}</h3>
-                                    <p className="text-gray-700 mb-2">{project.description}</p>
+                                    <div
+                                        className="text-gray-700 mb-2 prose prose-sm max-w-none"
+                                        dangerouslySetInnerHTML={{ __html: project.description }}
+                                    />
                                     {project.link && (
                                         <a href={project.link} className="text-indigo-600 hover:underline" target="_blank" rel="noopener noreferrer">
                                             View Project →
@@ -169,6 +177,35 @@ const ModernTemplate = ({ portfolio }) => {
                                     <div className="text-gray-700">{formatText(achievement.description)}</div>
                                 </div>
                             ))}
+                        </div>
+                    )}
+
+                    {/* Languages */}
+                    {content.languages?.length > 0 && (
+                        <div className="mb-8">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4 border-b-2 border-indigo-600 pb-2">Languages</h2>
+                            <div className="grid grid-cols-2 gap-4">
+                                {content.languages.map((language, index) => (
+                                    <div key={index} className="flex justify-between items-center bg-indigo-50 p-3 rounded-lg">
+                                        <span className="font-semibold text-gray-900">{language.name}</span>
+                                        <span className="text-sm text-indigo-600">{language.proficiency}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Interests */}
+                    {content.interests?.length > 0 && (
+                        <div className="mb-8">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4 border-b-2 border-indigo-600 pb-2">Interests</h2>
+                            <div className="flex flex-wrap gap-2">
+                                {content.interests.map((interest, index) => (
+                                    <span key={index} className="bg-indigo-100 text-indigo-800 px-4 py-2 rounded-full text-sm font-medium">
+                                        {interest}
+                                    </span>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>

@@ -52,6 +52,80 @@
     animation: pulse-glow 2s ease-in-out infinite;
 }
 
+/* Gradient Backgrounds */
+.gradient-purple {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-blue {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-ocean {
+    background: linear-gradient(135deg, #2E3192 0%, #1BFFFF 100%);
+}
+
+.gradient-sunset {
+    background: linear-gradient(135deg, #ff6b6b 0%, #feca57 100%);
+}
+
+.gradient-forest {
+    background: linear-gradient(135deg, #134e5e 0%, #71b280 100%);
+}
+
+/* Card Styles */
+.card {
+    @apply bg-white rounded-lg shadow-md p-6 transition-all duration-300;
+}
+
+.card:hover {
+    @apply shadow-xl transform -translate-y-1;
+}
+
+.card-gradient {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+    backdrop-filter: blur(10px);
+}
+
+/* Button Styles */
+.btn-primary {
+    @apply bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg hover:scale-105;
+}
+
+.btn-secondary {
+    @apply bg-gray-200 text-gray-800 px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:bg-gray-300;
+}
+
+.btn-outline {
+    @apply border-2 border-purple-600 text-purple-600 px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:bg-purple-600 hover:text-white;
+}
+
+/* Input Styles */
+.input-field {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300;
+}
+
+/* Badge Styles */
+.badge {
+    @apply inline-block px-3 py-1 text-sm font-semibold rounded-full;
+}
+
+.badge-primary {
+    @apply bg-purple-100 text-purple-800;
+}
+
+.badge-success {
+    @apply bg-green-100 text-green-800;
+}
+
+.badge-warning {
+    @apply bg-yellow-100 text-yellow-800;
+}
+
+.badge-danger {
+    @apply bg-red-100 text-red-800;
+}
+
 /* Glassmorphism */
 .glass {
     background: rgba(255, 255, 255, 0.1);
@@ -59,23 +133,10 @@
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.glass-dark {
-    background: rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Gradient Text */
-.gradient-text {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-/* Custom Scrollbar */
+/* Scrollbar Styles */
 ::-webkit-scrollbar {
-    width: 10px;
+    width: 8px;
+    height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -83,51 +144,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 5px;
+    background: #9333ea;
+    border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-}
-
-/* Smooth Transitions */
-* {
-    transition: all 0.3s ease;
-}
-
-/* Button Hover Effects */
-.btn-hover {
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-hover::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
-}
-
-.btn-hover:hover::before {
-    width: 300px;
-    height: 300px;
-}
-
-/* Card Hover Effect */
-.card-hover {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.card-hover:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    background: #7e22ce;
 }
 
 /* Loading Spinner */
@@ -150,33 +172,15 @@
     }
 }
 
-/* Floating Animation */
-@keyframes float {
-
-    0%,
-    100% {
-        transform: translateY(0px);
-    }
-
-    50% {
-        transform: translateY(-20px);
-    }
-}
-
-.animate-float {
-    animation: float 3s ease-in-out infinite;
-}
-
-/* Gradient Backgrounds */
-.bg-gradient-primary {
+/* Gradient Text */
+.gradient-text {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-.bg-gradient-secondary {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-
-.bg-gradient-success {
+.gradient-text-ocean {
     background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
 }
 
@@ -201,4 +205,45 @@ select:focus {
 /* Smooth Page Transitions */
 .page-transition {
     animation: fadeIn 0.5s ease-out;
+}
+
+/* Bullet List Styling for AI-generated content */
+.prose ul,
+ul {
+    list-style-type: disc;
+    margin-left: 1.5rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.prose ul li,
+ul li {
+    margin-bottom: 0.25rem;
+    line-height: 1.6;
+}
+
+.prose ol,
+ol {
+    list-style-type: decimal;
+    margin-left: 1.5rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.prose ol li,
+ol li {
+    margin-bottom: 0.25rem;
+    line-height: 1.6;
+}
+
+/* Nested lists */
+.prose ul ul,
+ul ul {
+    list-style-type: circle;
+    margin-left: 1rem;
+}
+
+.prose ul ul ul,
+ul ul ul {
+    list-style-type: square;
 }

@@ -31,7 +31,10 @@ const MinimalTemplate = ({ portfolio }) => {
                 {/* Summary */}
                 {content.personalInfo?.summary && (
                     <div className="mb-10">
-                        <p className="text-gray-700 leading-relaxed text-center italic">{content.personalInfo.summary}</p>
+                        <div
+                            className="text-gray-700 leading-relaxed text-center italic prose prose-sm max-w-none"
+                            dangerouslySetInnerHTML={{ __html: content.personalInfo.summary }}
+                        />
                     </div>
                 )}
 
@@ -46,7 +49,10 @@ const MinimalTemplate = ({ portfolio }) => {
                                     <span className="text-sm text-gray-600">{exp.startDate} - {exp.endDate || 'Present'}</span>
                                 </div>
                                 <p className="text-gray-700 font-medium mb-2">{exp.company}</p>
-                                <div className="text-sm">{formatText(exp.description)}</div>
+                                <div
+                                    className="text-sm prose prose-sm max-w-none"
+                                    dangerouslySetInnerHTML={{ __html: exp.description }}
+                                />
                             </div>
                         ))}
                     </div>
@@ -141,6 +147,35 @@ const MinimalTemplate = ({ portfolio }) => {
                                 <div className="text-sm">{formatText(achievement.description)}</div>
                             </div>
                         ))}
+                    </div>
+                )}
+
+                {/* Languages */}
+                {content.languages?.length > 0 && (
+                    <div className="mb-10">
+                        <h2 className="text-sm font-bold text-gray-900 uppercase tracking-widest mb-6">Languages</h2>
+                        <div className="grid grid-cols-2 gap-4">
+                            {content.languages.map((language, index) => (
+                                <div key={index} className="flex justify-between items-center border-b border-gray-200 pb-2">
+                                    <span className="font-semibold">{language.name}</span>
+                                    <span className="text-sm text-gray-600">{language.proficiency}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Interests */}
+                {content.interests?.length > 0 && (
+                    <div className="mb-10">
+                        <h2 className="text-sm font-bold text-gray-900 uppercase tracking-widest mb-6">Interests</h2>
+                        <div className="flex flex-wrap gap-2">
+                            {content.interests.map((interest, index) => (
+                                <span key={index} className="border border-gray-300 px-3 py-1 rounded text-sm">
+                                    {interest}
+                                </span>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>

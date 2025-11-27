@@ -33,8 +33,7 @@ async function generateWithOllama(prompt) {
             prompt: prompt,
             stream: false
         }, {
-        }, {
-            timeout: 60000 // 60 second timeout (increased for initial load)
+            timeout: 120000 // 120 second timeout for slow Ollama responses
         });
         return response.data.response;
     } catch (error) {
@@ -63,17 +62,58 @@ async function generateText(prompt, systemContext = '') {
 }
 
 // Improve text with AI
+// Improve text with AI
 async function improveText(text, instruction = 'improve') {
     const prompts = {
-        improve: `Improve the following text to be more professional, clear, and impactful. Keep the same meaning but enhance the language:\n\n${text}`,
-        professional: `Rewrite the following text in a highly professional tone suitable for a resume or portfolio:\n\n${text}`,
-        shorten: `Condense the following text to be more concise while keeping the key information:\n\n${text}`,
-        expand: `Expand the following text with more details and examples while maintaining professionalism:\n\n${text}`,
-        bullets: `Convert the following text into clear, concise bullet points:\n\n${text}`
+        improve: `Improve the following text to be more professional, clear, and impactful. Return ONLY the improved text, no explanations:\n\n${text}`,
+        professional: `Rewrite the following text in a professional tone suitable for a resume. Return ONLY the rewritten text, no explanations:\n\n${text}`,
+        shorten: `Make the following text more concise while keeping key information. Return ONLY the shortened text:\n\n${text}`,
+        expand: `Expand the following text with more details while maintaining professionalism. Return ONLY the expanded text:\n\n${text}`,
+        bullets: `Convert the following text into bullet points. Return ONLY the bullet points, one per line starting with •:\n\n${text}`
     };
 
     const prompt = prompts[instruction] || prompts.improve;
-    return await generateText(prompt);
+    const rawResponse = await generateText(prompt);
+
+    // For bullets, convert to HTML list
+    if (instruction === 'bullets') {
+        // Check if response already has HTML tags
+        if (rawResponse.includes('<ul>') || rawResponse.includes('<li>')) {
+            // Clean up and return
+            return rawResponse
+                .replace(/```html/g, '')
+                .replace(/```/g, '')
+                .replace(/^(Here is|Here's).*?:/gim, '')
+                .trim();
+        }
+
+        // Convert plain bullet points or text to HTML list
+        const lines = rawResponse
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0);
+
+        const listItems = lines.map(line => {
+            // Remove bullet characters, markdown bold, and other formatting
+            let text = line
+                .replace(/^[•\-\*\d\.]\s*/, '') // Remove bullets
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Convert **bold** to <strong>
+                .replace(/\*(.*?)\*/g, '<em>$1</em>') // Convert *italic* to <em>
+                .trim();
+            return `  <li>${text}</li>`;
+        }).join('\n');
+
+        return `<ul>\n${listItems}\n</ul>`;
+    }
+
+    // For other actions, clean up and convert markdown formatting to HTML
+    let cleaned = rawResponse
+        .replace(/^(Here is|Here's|I've|I have).*?:/gim, '')
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Convert **bold** to <strong>
+        .replace(/\*(.*?)\*/g, '<em>$1</em>') // Convert *italic* to <em>
+        .trim();
+
+    return cleaned;
 }
 
 // Generate career goal steps

@@ -176,7 +176,10 @@ const TwoColumnTemplate = ({ portfolio }) => {
                                     <div key={idx}>
                                         <h3 className="text-lg font-bold text-gray-900">{project.name}</h3>
                                         {project.description && (
-                                            <div className="text-gray-700 text-sm mb-2">{formatText(project.description)}</div>
+                                            <div
+                                                className="text-gray-700 text-sm mb-2 prose prose-sm max-w-none"
+                                                dangerouslySetInnerHTML={{ __html: project.description }}
+                                            />
                                         )}
                                         {project.technologies && project.technologies.length > 0 && (
                                             <div className="flex flex-wrap gap-2">
@@ -188,6 +191,35 @@ const TwoColumnTemplate = ({ portfolio }) => {
                                             </div>
                                         )}
                                     </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Languages */}
+                    {content.languages?.length > 0 && (
+                        <div className="mb-8">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">Languages</h2>
+                            <div className="grid grid-cols-2 gap-4">
+                                {content.languages.map((language, index) => (
+                                    <div key={index} className="flex justify-between items-center bg-gray-50 p-3 rounded">
+                                        <span className="font-semibold">{language.name}</span>
+                                        <span className="text-sm text-gray-600">{language.proficiency}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Interests */}
+                    {content.interests?.length > 0 && (
+                        <div className="mb-8">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">Interests</h2>
+                            <div className="flex flex-wrap gap-2">
+                                {content.interests.map((interest, index) => (
+                                    <span key={index} className="bg-gray-100 text-gray-800 px-4 py-2 rounded-full text-sm">
+                                        {interest}
+                                    </span>
                                 ))}
                             </div>
                         </div>

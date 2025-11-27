@@ -1,12 +1,42 @@
 import { useState } from 'react';
-import AIAssistant from '../AIAssistant';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
+import RichTextEditor from '../RichTextEditor';
 
 const PersonalInfo = ({ data, onChange }) => {
     const [uploading, setUploading] = useState(false);
+    const [showAIMenu, setShowAIMenu] = useState(false);
+    const [aiProcessing, setAiProcessing] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         onChange({ ...data, [name]: value });
+    };
+
+    const handleAIImprove = async (action) => {
+        const text = data?.summary || '';
+        if (!text.trim()) {
+            toast.error('Please enter some text first');
+            return;
+        }
+
+        setAiProcessing(true);
+        setShowAIMenu(false);
+
+        try {
+            const { data: result } = await axios.post('/api/ai/improve', {
+                text,
+                action
+            }, { withCredentials: true });
+
+            onChange({ ...data, summary: result.improvedText });
+            toast.success('Text improved!');
+        } catch (error) {
+            console.error('AI error:', error);
+            toast.error('Failed to improve text. Make sure Ollama is running.');
+        } finally {
+            setAiProcessing(false);
+        }
     };
 
     const handleImageUpload = (e) => {
@@ -19,7 +49,6 @@ const PersonalInfo = ({ data, onChange }) => {
 
             setUploading(true);
 
-            // Create image element to compress
             const img = new Image();
             const reader = new FileReader();
 
@@ -27,17 +56,14 @@ const PersonalInfo = ({ data, onChange }) => {
                 img.src = event.target.result;
 
                 img.onload = () => {
-                    // Create canvas for compression
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
 
-                    // Set max dimensions
                     const maxWidth = 400;
                     const maxHeight = 400;
                     let width = img.width;
                     let height = img.height;
 
-                    // Calculate new dimensions
                     if (width > height) {
                         if (width > maxWidth) {
                             height = (height * maxWidth) / width;
@@ -52,13 +78,9 @@ const PersonalInfo = ({ data, onChange }) => {
 
                     canvas.width = width;
                     canvas.height = height;
-
-                    // Draw and compress
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    // Convert to base64 with compression (0.7 quality)
                     const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-
                     onChange({ ...data, profileImage: compressedBase64 });
                     setUploading(false);
                 };
@@ -133,6 +155,7 @@ const PersonalInfo = ({ data, onChange }) => {
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                 />
             </div>
+
             <div>
                 <label className="block text-sm font-medium text-gray-700">Job Title</label>
                 <input
@@ -144,6 +167,7 @@ const PersonalInfo = ({ data, onChange }) => {
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                 />
             </div>
+
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <label className="block text-sm font-medium text-gray-700">Email</label>
@@ -166,6 +190,7 @@ const PersonalInfo = ({ data, onChange }) => {
                     />
                 </div>
             </div>
+
             <div>
                 <label className="block text-sm font-medium text-gray-700">Location</label>
                 <input
@@ -176,6 +201,7 @@ const PersonalInfo = ({ data, onChange }) => {
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
                 />
             </div>
+
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <label className="block text-sm font-medium text-gray-700">LinkedIn URL</label>
@@ -198,20 +224,56 @@ const PersonalInfo = ({ data, onChange }) => {
                     />
                 </div>
             </div>
+
+            {/* Professional Summary with AI Dropdown */}
             <div>
                 <div className="flex justify-between items-center mb-2">
                     <label className="block text-sm font-medium text-gray-700">Professional Summary</label>
-                    <AIAssistant
-                        text={data?.summary || ''}
-                        onApply={(improvedText) => onChange({ ...data, summary: improvedText })}
-                    />
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowAIMenu(!showAIMenu)}
+                            disabled={aiProcessing}
+                            className="text-xs px-3 py-1.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full hover:from-purple-600 hover:to-pink-600 transition flex items-center gap-1 disabled:opacity-50"
+                        >
+                            {aiProcessing ? (
+                                <>
+                                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    <span>Processing...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span>✨</span>
+                                    <span>AI Improve</span>
+                                    <span className="ml-1">{showAIMenu ? '▲' : '▼'}</span>
+                                </>
+                            )}
+                        </button>
+
+                        {showAIMenu && !aiProcessing && (
+                            <div className="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-10">
+                                <button onClick={() => handleAIImprove('improve')} className="w-full text-left px-4 py-2 hover:bg-blue-50 flex items-center gap-2 text-sm rounded-t-lg">
+                                    <span>✨</span><span>Improve Text</span>
+                                </button>
+                                <button onClick={() => handleAIImprove('professional')} className="w-full text-left px-4 py-2 hover:bg-purple-50 flex items-center gap-2 text-sm">
+                                    <span>💼</span><span>Make Professional</span>
+                                </button>
+                                <button onClick={() => handleAIImprove('shorten')} className="w-full text-left px-4 py-2 hover:bg-orange-50 flex items-center gap-2 text-sm">
+                                    <span>✂️</span><span>Make Shorter</span>
+                                </button>
+                                <button onClick={() => handleAIImprove('expand')} className="w-full text-left px-4 py-2 hover:bg-green-50 flex items-center gap-2 text-sm">
+                                    <span>📝</span><span>Expand Details</span>
+                                </button>
+                                <button onClick={() => handleAIImprove('bullets')} className="w-full text-left px-4 py-2 hover:bg-pink-50 flex items-center gap-2 text-sm rounded-b-lg">
+                                    <span>•</span><span>Convert to Bullets</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
-                <textarea
-                    name="summary"
-                    rows={4}
+                <RichTextEditor
                     value={data?.summary || ''}
-                    onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
+                    onChange={(html) => onChange({ ...data, summary: html })}
+                    disabled={aiProcessing}
                     placeholder="Briefly describe your professional background..."
                 />
             </div>

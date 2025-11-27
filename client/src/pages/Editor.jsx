@@ -5,7 +5,6 @@ import { toast } from 'react-hot-toast';
 import debounce from 'lodash.debounce';
 import Sidebar from '../components/editor/Sidebar';
 import TemplateSelector from '../components/editor/TemplateSelector';
-import AIAssistant from '../components/editor/AIAssistant';
 
 import PersonalInfo from '../components/editor/sections/PersonalInfo';
 import Experience from '../components/editor/sections/Experience';
@@ -24,8 +23,6 @@ const Editor = () => {
     const [loading, setLoading] = useState(true);
     const [activeSection, setActiveSection] = useState('personal');
     const [isSaving, setIsSaving] = useState(false);
-    const [selectedText, setSelectedText] = useState('');
-    const [activeField, setActiveField] = useState(null);
 
     useEffect(() => {
         fetchPortfolio();
@@ -181,19 +178,6 @@ const Editor = () => {
                     </div>
                 </div>
             </div>
-
-            {/* Floating AI Assistant */}
-            <AIAssistant
-                text={selectedText}
-                onApply={(improvedText) => {
-                    // Update the active field with improved text
-                    if (activeField) {
-                        // This will be handled by the section components
-                        toast.success('Text improved! Paste it into your field.');
-                        navigator.clipboard.writeText(improvedText);
-                    }
-                }}
-            />
         </div>
     );
 };
