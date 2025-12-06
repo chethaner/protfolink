@@ -4,103 +4,106 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
 import { useAuth } from '../context/AuthContext';
+import { ScrollReveal, ParallaxSection, FloatingOrb, MagneticButton, ScrollProgress } from '../components/animations/ScrollEffects';
+import { motion } from 'framer-motion';
 
 const Dashboard = () => {
     const [portfolios, setPortfolios] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
-    const { logout } = useAuth();
+    const { logout, user } = useAuth();
 
     useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            toast.error('Please login to access dashboard');
+            navigate('/login');
+            return;
+        }
         fetchPortfolios();
-    }, []);
+    }, [navigate]);
 
     const fetchPortfolios = async () => {
         try {
-            const { data } = await axios.get('/api/portfolios');
-            setPortfolios(data);
+            const token = localStorage.getItem('token');
+            const response = await axios.get('http://localhost:5000/api/portfolios', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setPortfolios(response.data);
         } catch (error) {
-            toast.error('Failed to fetch portfolios');
+            if (error.response?.status === 401) {
+                toast.error('Session expired. Please login again.');
+                localStorage.removeItem('token');
+                navigate('/login');
+            } else {
+                toast.error('Failed to load portfolios');
+            }
         } finally {
             setLoading(false);
         }
     };
 
     const createPortfolio = async () => {
+        if (portfolios.length >= 3) {
+            toast.error('Maximum 3 portfolios allowed');
+            return;
+        }
         try {
-            const { data } = await axios.post('/api/portfolios', {
-                title: 'My New Portfolio'
-            });
-            setPortfolios([data, ...portfolios]);
-            toast.success('Portfolio created');
+            const token = localStorage.getItem('token');
+            const { data } = await axios.post(
+                'http://localhost:5000/api/portfolios',
+                { title: `Portfolio ${portfolios.length + 1}` },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
             navigate(`/editor/${data._id}`);
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Failed to create portfolio');
+            toast.error('Failed to create portfolio');
         }
     };
 
     const deletePortfolio = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this portfolio?')) return;
+        if (!window.confirm('Delete this portfolio?')) return;
         try {
-            await axios.delete(`/api/portfolios/${id}`);
-            setPortfolios(portfolios.filter(p => p._id !== id));
+            const token = localStorage.getItem('token');
+            await axios.delete(`http://localhost:5000/api/portfolios/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             toast.success('Portfolio deleted');
+            fetchPortfolios();
         } catch (error) {
-            toast.error('Failed to delete portfolio');
+            toast.error('Failed to delete');
         }
     };
 
     const duplicatePortfolio = async (id) => {
-        try {
-            const { data } = await axios.post(`/api/portfolios/${id}/duplicate`);
-            setPortfolios([data, ...portfolios]);
-            toast.success('Portfolio duplicated');
-        } catch (error) {
-            toast.error(error.response?.data?.message || 'Failed to duplicate portfolio');
+        if (portfolios.length >= 3) {
+            toast.error('Maximum 3 portfolios allowed');
+            return;
         }
-    };
-
-    const togglePublish = async (id, isPublic) => {
         try {
-            const endpoint = isPublic ? 'unpublish' : 'publish';
-            const { data } = await axios.post(`/api/public/${id}/${endpoint}`);
-
-            setPortfolios(portfolios.map(p =>
-                p._id === id ? { ...p, isPublic: !isPublic, slug: data.slug || p.slug } : p
-            ));
-
-            toast.success(isPublic ? 'Portfolio unpublished' : 'Portfolio published!');
-            if (!isPublic && data.publicUrl) {
-                toast.success(`Public URL: ${window.location.origin}${data.publicUrl}`);
-            }
-        } catch (error) {
-            toast.error(error.response?.data?.message || 'Failed to update publish status');
-        }
-    };
-
-    const downloadPDF = async (id, title) => {
-        try {
-            toast.loading('Generating PDF...');
-            const response = await axios.get(`/api/pdf/${id}/pdf`, {
-                responseType: 'blob'
+            const token = localStorage.getItem('token');
+            await axios.post(`http://localhost:5000/api/portfolios/${id}/duplicate`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
             });
-
-            const blob = new Blob([response.data], { type: 'application/pdf' });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `${title}.pdf`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(url);
-
-            toast.dismiss();
-            toast.success('PDF downloaded!');
+            toast.success('Portfolio duplicated successfully');
+            fetchPortfolios();
         } catch (error) {
-            toast.dismiss();
-            toast.error('Failed to generate PDF');
-            console.error('PDF download error:', error);
+            toast.error('Failed to duplicate portfolio');
+        }
+    };
+
+    const togglePublic = async (id, currentStatus) => {
+        try {
+            const token = localStorage.getItem('token');
+            await axios.put(
+                `http://localhost:5000/api/portfolios/${id}`,
+                { isPublic: !currentStatus },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            toast.success(currentStatus ? 'Portfolio set to private' : 'Portfolio is now public!');
+            fetchPortfolios();
+        } catch (error) {
+            toast.error('Failed to update portfolio status');
         }
     };
 
@@ -112,185 +115,332 @@ const Dashboard = () => {
     if (loading) return <div className="p-8 text-center">Loading...</div>;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 page-transition">
-            {/* Enhanced Header with Glassmorphism */}
-            <div className="bg-white/80 backdrop-blur-md shadow-lg border-b-4 border-gradient-to-r from-purple-500 to-pink-500 sticky top-0 z-50">
-                <div className="container mx-auto px-4 py-4">
-                    <div className="flex justify-between items-center">
-                        {/* Logo */}
-                        <div className="flex items-center gap-4">
-                            <h1 className="text-4xl font-black bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 bg-clip-text text-transparent">
-                                Portfolink
-                            </h1>
-                            <span className="hidden md:block text-gray-600 text-sm font-medium px-3 py-1 bg-purple-100 rounded-full">
-                                ✨ Build. Share. Succeed.
-                            </span>
-                        </div>
+        <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 50%, #FFFFFF 100%)' }}>
+            <ScrollProgress />
 
-                        {/* Navigation with Hover Effects */}
-                        <div className="flex items-center gap-3">
-                            <Link
-                                to="/jobs"
-                                className="text-gray-700 hover:text-purple-600 flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-purple-50 transition font-medium"
+            {/* Luxury Floating Orbs Background */}
+            <FloatingOrb delay={0} size={600} color="#D4AF37" />
+            <FloatingOrb delay={5} size={400} color="#0A0A0A" />
+            <FloatingOrb delay={10} size={500} color="#D4AF37" />
+
+            {/* Premium Luxury Header */}
+            <motion.div
+                className="bg-white/90 backdrop-blur-xl border-b border-gray-200 sticky top-0 z-50"
+                initial={{ y: -100 }}
+                animate={{ y: 0 }}
+                transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+                style={{ boxShadow: '0 2px 16px rgba(0, 0, 0, 0.06)' }}
+            >
+                <div className="luxury-container px-6 py-5">
+                    <div className="flex justify-between items-center">
+                        {/* Luxury Logo */}
+                        <motion.div
+                            className="flex items-center gap-4"
+                            whileHover={{ scale: 1.02 }}
+                        >
+                            <h1 className="text-4xl font-bold cursor-pointer" style={{ fontFamily: 'var(--font-heading)' }}>
+                                <span style={{ color: 'var(--luxury-black)' }}>PORT</span>
+                                <span style={{ color: 'var(--luxury-gold)' }}>FOLINK</span>
+                            </h1>
+                            <motion.span
+                                className="hidden md:block text-gray-600 text-sm font-medium px-3 py-1 bg-gray-100 rounded-full"
+                                animate={{ opacity: [0.7, 1, 0.7] }}
+                                transition={{ duration: 3, repeat: Infinity }}
                             >
-                                <span className="text-xl">💼</span>
-                                <span className="hidden md:inline">Jobs</span>
-                            </Link>
-                            <Link
-                                to="/analytics"
-                                className="text-gray-700 hover:text-blue-600 flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-blue-50 transition font-medium"
-                            >
-                                <span className="text-xl">📊</span>
-                                <span className="hidden md:inline">Analytics</span>
-                            </Link>
-                            <Link
-                                to="/career"
-                                className="text-gray-700 hover:text-green-600 flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-green-50 transition font-medium"
-                            >
-                                <span className="text-xl">🎯</span>
-                                <span className="hidden md:inline">Goals</span>
-                            </Link>
-                            <Link
-                                to="/profile"
-                                className="text-gray-700 hover:text-orange-600 flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-orange-50 transition font-medium"
-                            >
-                                <span className="text-xl">👤</span>
-                                <span className="hidden md:inline">Profile</span>
-                            </Link>
-                            <button
+                                ✨ Luxury Portfolio Builder
+                            </motion.span>
+                        </motion.div>
+
+                        {/* Navigation */}
+                        <div className="flex items-center gap-2">
+                            {['Jobs', 'Analytics', 'Goals', 'Profile'].map((item, i) => (
+                                <motion.div
+                                    key={item}
+                                    initial={{ opacity: 0, y: -20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: i * 0.1 }}
+                                >
+                                    <Link
+                                        to={`/${item.toLowerCase() === 'goals' ? 'career' : item.toLowerCase()}`}
+                                        className="text-gray-700 hover:text-black flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition font-medium"
+                                    >
+                                        <span className="text-xl">
+                                            {item === 'Jobs' && '💼'}
+                                            {item === 'Analytics' && '📊'}
+                                            {item === 'Goals' && '🎯'}
+                                            {item === 'Profile' && '👤'}
+                                        </span>
+                                        <span className="hidden md:inline">{item}</span>
+                                    </Link>
+                                </motion.div>
+                            ))}
+
+                            {user?.isAdmin && (
+                                <Link
+                                    to="/admin"
+                                    className="text-gray-700 hover:text-black flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition font-medium"
+                                >
+                                    <span className="text-xl">⚙️</span>
+                                    <span className="hidden md:inline">Admin</span>
+                                </Link>
+                            )}
+
+                            <motion.button
                                 onClick={handleLogout}
-                                className="text-gray-700 hover:text-red-600 flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-50 transition font-medium"
+                                className="text-gray-700 hover:text-red-600 flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 transition font-medium"
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
                             >
                                 <span className="text-xl">🚪</span>
                                 <span className="hidden md:inline">Logout</span>
-                            </button>
-                            <button
+                            </motion.button>
+
+                            <MagneticButton
                                 onClick={createPortfolio}
-                                className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-2.5 rounded-xl hover:from-purple-700 hover:to-pink-700 transition duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold btn-hover"
+                                className="luxury-button luxury-button-gold flex items-center gap-2 ml-2"
                             >
                                 <span className="text-xl">+</span>
                                 <span>Create New</span>
-                            </button>
+                            </MagneticButton>
                         </div>
                     </div>
                 </div>
+            </motion.div>
+
+            {/* ML Tools Section */}
+            <div className="luxury-container px-6 py-8">
+                <ScrollReveal>
+                    <div className="luxury-card p-6 mb-8">
+                        <div className="flex items-center gap-3 mb-6">
+                            <span className="text-3xl">🤖</span>
+                            <h2 className="text-2xl font-bold" style={{ fontFamily: 'var(--font-heading)' }}>
+                                AI-Powered Career Tools
+                            </h2>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <Link
+                                to="/skills"
+                                className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg hover:shadow-lg transition-all group"
+                            >
+                                <div className="text-3xl mb-2 group-hover:scale-110 transition">🎯</div>
+                                <h3 className="font-bold text-lg mb-1">Skill Analysis</h3>
+                                <p className="text-sm text-gray-600">Extract & visualize your skills</p>
+                            </Link>
+
+                            <Link
+                                to="/skill-gaps"
+                                className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg hover:shadow-lg transition-all group"
+                            >
+                                <div className="text-3xl mb-2 group-hover:scale-110 transition">📊</div>
+                                <h3 className="font-bold text-lg mb-1">Skill Gaps</h3>
+                                <p className="text-sm text-gray-600">Compare vs job requirements</p>
+                            </Link>
+
+                            <Link
+                                to="/learning-path"
+                                className="p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-lg hover:shadow-lg transition-all group"
+                            >
+                                <div className="text-3xl mb-2 group-hover:scale-110 transition">📚</div>
+                                <h3 className="font-bold text-lg mb-1">Learning Path</h3>
+                                <p className="text-sm text-gray-600">Get personalized roadmaps</p>
+                            </Link>
+
+                            <Link
+                                to="/career-insights"
+                                className="p-4 bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg hover:shadow-lg transition-all group"
+                            >
+                                <div className="text-3xl mb-2 group-hover:scale-110 transition">💼</div>
+                                <h3 className="font-bold text-lg mb-1">Career Insights</h3>
+                                <p className="text-sm text-gray-600">Salary & career predictions</p>
+                            </Link>
+                        </div>
+                    </div>
+                </ScrollReveal>
             </div>
 
-            {/* Main Content with Animation */}
-            <div className="container mx-auto px-4 py-8 animate-fadeIn">
-                <div className="mb-8">
-                    <h1 className="text-4xl font-black text-gray-900 mb-2 text-shadow">
-                        My Portfolios
-                    </h1>
-                    <p className="text-gray-600 text-lg">Manage and share your professional portfolios</p>
-                </div>
+            {/* Main Content */}
+            <div className="luxury-container px-6 py-16 relative z-10">
+                <ParallaxSection speed={0.3}>
+                    <ScrollReveal>
+                        <div className="mb-16 text-center">
+                            <motion.h1
+                                className="text-6xl md:text-7xl font-bold mb-4"
+                                style={{ fontFamily: 'var(--font-heading)', color: 'var(--luxury-black)' }}
+                                initial={{ opacity: 0, y: 40 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.8 }}
+                            >
+                                My Portfolios
+                            </motion.h1>
+                            <motion.p
+                                className="text-gray-600 text-xl"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.3 }}
+                            >
+                                Create and manage your professional portfolios
+                            </motion.p>
+                            <div className="luxury-divider w-32 mx-auto mt-8"></div>
+                        </div>
+                    </ScrollReveal>
+                </ParallaxSection>
 
                 {portfolios.length === 0 ? (
-                    <div className="text-center py-20 bg-white/60 backdrop-blur-sm rounded-2xl shadow-xl border-2 border-dashed border-purple-300 animate-fadeIn">
-                        <div className="text-8xl mb-6 animate-float">📁</div>
-                        <h2 className="text-3xl font-bold text-gray-900 mb-3 text-shadow">No Portfolios Yet</h2>
-                        <p className="text-gray-600 mb-8 text-lg">Create your first portfolio to get started on your journey!</p>
-                        <button
-                            onClick={createPortfolio}
-                            className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-10 py-4 rounded-xl hover:from-purple-700 hover:to-pink-700 transition shadow-2xl font-bold text-lg transform hover:scale-105 btn-hover"
-                        >
-                            ✨ Create Your First Portfolio
-                        </button>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {portfolios.map((portfolio, index) => (
-                            <div
-                                key={portfolio._id}
-                                className="bg-white rounded-2xl shadow-lg overflow-hidden card-hover border border-gray-100 animate-fadeIn"
-                                style={{ animationDelay: `${index * 0.1}s` }}
+                    <ScrollReveal delay={0.2}>
+                        <div className="text-center py-32 luxury-card max-w-3xl mx-auto">
+                            <motion.div
+                                className="text-9xl mb-8"
+                                animate={{ y: [0, -20, 0] }}
+                                transition={{ duration: 3, repeat: Infinity }}
                             >
-                                <div className="h-48 bg-gradient-to-br from-purple-500 via-pink-500 to-purple-600 flex items-center justify-center relative overflow-hidden">
-                                    <div className="absolute inset-0 bg-black/10"></div>
-                                    <span className="text-white text-6xl relative z-10 animate-float">📄</span>
-                                    <div className="absolute top-4 right-4 z-10">
-                                        {portfolio.isPublic ? (
-                                            <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                                                🌐 Live
-                                            </span>
-                                        ) : (
-                                            <span className="bg-gray-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                                                🔒 Private
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="p-6">
-                                    <h3 className="text-2xl font-bold text-gray-900 mb-2 truncate">{portfolio.title}</h3>
-                                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-                                        <span>📅</span>
-                                        <span>Updated {format(new Date(portfolio.updatedAt), 'MMM d, yyyy')}</span>
-                                    </div>
-                                    <div className="space-y-3">
-                                        <div className="flex gap-2">
-                                            <Link
-                                                to={`/editor/${portfolio._id}`}
-                                                className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-center py-3 rounded-xl hover:from-blue-600 hover:to-blue-700 transition duration-200 font-semibold shadow-md hover:shadow-lg transform hover:scale-105"
-                                            >
-                                                ✏️ Edit
-                                            </Link>
-                                            <Link
-                                                to={`/ats/${portfolio._id}`}
-                                                className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white text-center py-3 rounded-xl hover:from-green-600 hover:to-green-700 transition duration-200 font-semibold shadow-md hover:shadow-lg transform hover:scale-105"
-                                            >
-                                                🎯 ATS
-                                            </Link>
+                                📁
+                            </motion.div>
+                            <h2 className="text-4xl font-bold text-gray-900 mb-4" style={{ fontFamily: 'var(--font-heading)' }}>
+                                No Portfolios Yet
+                            </h2>
+                            <p className="text-gray-600 mb-12 text-xl">Create your first luxury portfolio to begin your journey!</p>
+                            <MagneticButton
+                                onClick={createPortfolio}
+                                className="luxury-button luxury-button-gold px-12 py-5 text-lg"
+                            >
+                                ✨ Create Your First Portfolio
+                            </MagneticButton>
+                        </div>
+                    </ScrollReveal>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                        {portfolios.map((portfolio, index) => (
+                            <ScrollReveal key={portfolio._id} delay={index * 0.1}>
+                                <motion.div
+                                    className="luxury-card overflow-hidden"
+                                    whileHover={{ y: -8, boxShadow: '0 16px 48px rgba(0, 0, 0, 0.16)' }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    <div className="relative h-56 bg-gradient-to-br from-gray-900 via-black to-gray-800 overflow-hidden group">
+                                        <motion.div
+                                            className="absolute inset-0"
+                                            style={{ background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, transparent 100%)' }}
+                                            whileHover={{ opacity: 0.3 }}
+                                            transition={{ duration: 0.6 }}
+                                        />
+                                        <motion.span
+                                            className="text-white text-7xl relative z-10 flex items-center justify-center h-full"
+                                            whileHover={{ scale: 1.1 }}
+                                            transition={{ duration: 0.3 }}
+                                        >
+                                            📄
+                                        </motion.span>
+                                        <div className="absolute top-4 right-4 z-10">
+                                            {portfolio.isPublic ? (
+                                                <motion.span
+                                                    className="bg-green-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg"
+                                                    animate={{ scale: [1, 1.05, 1] }}
+                                                    transition={{ duration: 2, repeat: Infinity }}
+                                                >
+                                                    🌐 Live
+                                                </motion.span>
+                                            ) : (
+                                                <span className="bg-gray-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-lg">
+                                                    🔒 Draft
+                                                </span>
+                                            )}
                                         </div>
-                                        <div className="flex justify-between items-center pt-3 border-t border-gray-100">
-                                            <div className="flex gap-4">
-                                                <button
-                                                    onClick={() => downloadPDF(portfolio._id, portfolio.title)}
-                                                    className="text-purple-600 hover:text-purple-800 font-semibold text-sm flex items-center gap-1 transition"
-                                                    title="Download PDF"
+                                    </div>
+
+                                    <div className="p-6 bg-white">
+                                        <h3 className="text-2xl font-bold mb-2" style={{ fontFamily: 'var(--font-heading)' }}>
+                                            {portfolio.title || 'Untitled Portfolio'}
+                                        </h3>
+                                        <p className="text-gray-500 text-sm mb-6">
+                                            Updated {format(new Date(portfolio.updatedAt), 'MMM d, yyyy')}
+                                        </p>
+
+                                        {/* Action Buttons */}
+                                        <div className="space-y-3">
+                                            <div className="flex gap-3">
+                                                <Link
+                                                    to={`/editor/${portfolio._id}`}
+                                                    className="flex-1 luxury-button luxury-button-gold text-center text-sm py-3"
                                                 >
-                                                    <span>📄</span> PDF
-                                                </button>
-                                                <button
-                                                    onClick={() => duplicatePortfolio(portfolio._id)}
-                                                    className="text-blue-600 hover:text-blue-800 font-semibold text-sm flex items-center gap-1 transition"
-                                                    title="Duplicate"
+                                                    ✏️ Edit
+                                                </Link>
+                                                <Link
+                                                    to={portfolio.isPublic && portfolio.slug ? `/p/${portfolio.slug}` : `/preview/${portfolio._id}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex-1 luxury-button luxury-button-outline text-center text-sm py-3"
                                                 >
-                                                    <span>📋</span> Copy
-                                                </button>
-                                                <button
-                                                    onClick={() => deletePortfolio(portfolio._id)}
-                                                    className="text-red-600 hover:text-red-800 font-semibold text-sm flex items-center gap-1 transition"
-                                                    title="Delete"
-                                                >
-                                                    <span>🗑️</span> Delete
-                                                </button>
+                                                    👁️ Preview
+                                                </Link>
                                             </div>
-                                            <button
-                                                onClick={() => togglePublish(portfolio._id, portfolio.isPublic)}
-                                                className={`px-3 py-1 rounded-lg text-sm font-semibold transition ${portfolio.isPublic
-                                                    ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                    }`}
-                                            >
-                                                {portfolio.isPublic ? '🌐 Public' : '🔒 Publish'}
-                                            </button>
+
+                                            <div className="flex gap-3">
+                                                <motion.button
+                                                    onClick={() => duplicatePortfolio(portfolio._id)}
+                                                    className="flex-1 luxury-button luxury-button-outline text-sm py-3"
+                                                    whileHover={{ scale: 1.02 }}
+                                                    whileTap={{ scale: 0.98 }}
+                                                >
+                                                    📋 Duplicate
+                                                </motion.button>
+                                                {portfolio.isPublic && portfolio.slug && (
+                                                    <motion.button
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(`${window.location.origin}/p/${portfolio.slug}`);
+                                                            toast.success('Link copied to clipboard!');
+                                                        }}
+                                                        className="flex-1 luxury-button luxury-button-primary text-sm py-3"
+                                                        whileHover={{ scale: 1.02 }}
+                                                        whileTap={{ scale: 0.98 }}
+                                                    >
+                                                        🔗 Share
+                                                    </motion.button>
+                                                )}
+                                            </div>
+
+                                            <div className="flex gap-3">
+                                                <motion.button
+                                                    onClick={() => togglePublic(portfolio._id, portfolio.isPublic)}
+                                                    className={`flex-1 px-4 py-3 rounded font-medium text-sm transition ${portfolio.isPublic
+                                                        ? 'bg-green-500 text-white hover:bg-green-600'
+                                                        : 'bg-gray-500 text-white hover:bg-gray-600'
+                                                        }`}
+                                                    whileHover={{ scale: 1.02 }}
+                                                    whileTap={{ scale: 0.98 }}
+                                                >
+                                                    {portfolio.isPublic ? '🌐 Make Private' : '🔒 Make Public'}
+                                                </motion.button>
+                                            </div>
+
+                                            <div className="flex gap-3">
+                                                <motion.button
+                                                    onClick={() => deletePortfolio(portfolio._id)}
+                                                    className="w-full px-4 py-3 border border-red-500 text-red-500 rounded hover:bg-red-50 transition text-sm font-medium"
+                                                    whileHover={{ scale: 1.05 }}
+                                                    whileTap={{ scale: 0.95 }}
+                                                >
+                                                    🗑️ Delete
+                                                </motion.button>
+                                            </div>
                                         </div>
+
                                         {portfolio.isPublic && portfolio.slug && (
-                                            <div className="text-xs text-gray-500 pt-2 border-t border-gray-100 bg-gray-50 -mx-6 -mb-6 px-6 py-3">
-                                                <span className="font-medium">Public URL:</span>{' '}
+                                            <div className="mt-4 pt-4 border-t border-gray-200">
+                                                <p className="text-xs text-gray-500 mb-2">Public URL:</p>
                                                 <a
                                                     href={`/p/${portfolio.slug}`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                                                    className="text-sm text-[#D4AF37] hover:text-[#C19B2A] font-medium transition flex-1 truncate block"
                                                 >
-                                                    /p/{portfolio.slug}
+                                                    {window.location.origin}/p/{portfolio.slug}
                                                 </a>
                                             </div>
                                         )}
                                     </div>
-                                </div>
-                            </div>
+                                </motion.div>
+                            </ScrollReveal>
                         ))}
                     </div>
                 )}

@@ -27,11 +27,23 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (formData) => {
         try {
-            const { data } = await axios.post('/api/auth/login', formData);
-            setUser(data);
-            toast.success('Logged in successfully');
+            console.log('Attempting login with:', formData.email);
+            const { data } = await axios.post('http://localhost:5000/api/auth/login', formData);
+            console.log('Login response:', data);
+
+            // Store token in localStorage
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+                axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+                console.log('Token stored successfully');
+            }
+
+            setUser(data.user || data);
+            toast.success('Logged in successfully!');
             return true;
         } catch (error) {
+            console.error('Login error:', error);
+            console.error('Error response:', error.response?.data);
             toast.error(error.response?.data?.message || 'Login failed');
             return false;
         }
@@ -39,11 +51,23 @@ export const AuthProvider = ({ children }) => {
 
     const register = async (formData) => {
         try {
-            const { data } = await axios.post('/api/auth/register', formData);
-            setUser(data);
-            toast.success('Registered successfully');
+            console.log('Attempting registration:', formData.email);
+            const { data } = await axios.post('http://localhost:5000/api/auth/register', formData);
+            console.log('Registration response:', data);
+
+            // Store token in localStorage
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+                axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+                console.log('Token stored successfully');
+            }
+
+            setUser(data.user || data);
+            toast.success('Registered successfully!');
             return true;
         } catch (error) {
+            console.error('Registration error:', error);
+            console.error('Error response:', error.response?.data);
             toast.error(error.response?.data?.message || 'Registration failed');
             return false;
         }

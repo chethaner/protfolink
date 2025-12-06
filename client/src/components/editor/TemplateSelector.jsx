@@ -10,7 +10,10 @@ const TemplateSelector = ({ currentTemplate, onTemplateChange }) => {
         minimal: '📄',
         creative: '🌈',
         corporate: '💼',
-        'two-column': '📊'
+        'two-column': '📊',
+        '3d': '🚀',
+        'luxury': '🎩',
+        'cyber': '⚡'
     };
 
     const templateColors = {
@@ -18,7 +21,10 @@ const TemplateSelector = ({ currentTemplate, onTemplateChange }) => {
         minimal: 'from-gray-400 to-gray-600',
         creative: 'from-pink-500 to-purple-500',
         corporate: 'from-blue-700 to-blue-900',
-        'two-column': 'from-teal-500 to-cyan-500'
+        'two-column': 'from-teal-500 to-cyan-500',
+        '3d': 'from-purple-600 to-pink-600',
+        'luxury': 'from-yellow-600 to-yellow-800',
+        'cyber': 'from-cyan-500 to-blue-600'
     };
 
     return (
@@ -83,8 +89,8 @@ const TemplateSelector = ({ currentTemplate, onTemplateChange }) => {
                                             setShowSelector(false);
                                         }}
                                         className={`group relative text-left p-4 rounded-xl transition-all duration-200 ${currentTemplate === template.id
-                                                ? 'bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-500 shadow-lg'
-                                                : 'bg-gray-50 border-2 border-gray-200 hover:border-purple-300 hover:shadow-md'
+                                            ? 'bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-500 shadow-lg'
+                                            : 'bg-gray-50 border-2 border-gray-200 hover:border-purple-300 hover:shadow-md'
                                             }`}
                                     >
                                         {/* Selected Badge */}

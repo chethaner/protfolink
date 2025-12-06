@@ -2,6 +2,248 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =============================================
+   LUXURY DESIGN SYSTEM - Audemars Piguet Inspired
+   ============================================= */
+
+:root {
+    /* Premium Color Palette */
+    --luxury-black: #0A0A0A;
+    --luxury-white: #FFFFFF;
+    --luxury-gold: #D4AF37;
+    --luxury-gold-hover: #C19B2A;
+    --luxury-gray-900: #1A1A1A;
+    --luxury-gray-800: #2D2D2D;
+    --luxury-gray-700: #3D3D3D;
+    --luxury-gray-600: #6B6B6B;
+    --luxury-gray-500: #8B8B8B;
+    --luxury-gray-400: #A8A8A8;
+    --luxury-gray-300: #C8C8C8;
+    --luxury-gray-200: #E5E5E5;
+    --luxury-gray-100: #F5F5F5;
+    --luxury-gray-50: #FAFAFA;
+    
+    /* Premium Typography */
+    --font-heading: 'Playfair Display', serif;
+    --font-body: 'Inter', sans-serif;
+    
+    /* Luxury Spacing */
+    --space-luxury: 8rem;
+    --space-section: 6rem;
+    --space-component: 4rem;
+    --space-element: 2rem;
+    --space-item: 1rem;
+    
+    /* Elegant Transitions */
+    --transition-elegant: all 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+    --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-quick: all 0.2s ease-out;
+    
+    /* Sophisticated Shadows */
+    --shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-elegant: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --shadow-luxury: 0 8px 32px rgba(0, 0, 0,  0.12);
+    --shadow-premium: 0 16px 48px rgba(0, 0, 0, 0.16);
+}
+
+/* Luxury Base Styles */
+@layer base {
+    body {
+        font-family: var(--font-body);
+        color: var(--luxury-gray-800);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        font-family: var(--font-heading);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+    }
+    
+    h1 {
+        font-size: clamp(2.5rem, 5vw, 4.5rem);
+        margin-bottom: 1.5rem;
+    }
+    
+    h2 {
+        font-size: clamp(2rem, 4vw, 3rem);
+        margin-bottom: 1.25rem;
+    }
+    
+    h3 {
+        font-size: clamp(1.5rem, 3vw, 2rem);
+        margin-bottom: 1rem;
+    }
+}
+
+/* Luxury Component Classes */
+@layer components {
+    /* Premium Card */
+    .luxury-card {
+        background: var(--luxury-white);
+        border: 1px solid var(--luxury-gray-200);
+        border-radius: 0.5rem;
+        transition: var(--transition-elegant);
+        box-shadow: var(--shadow-subtle);
+    }
+    
+    .luxury-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-luxury);
+        border-color: var(--luxury-gold);
+    }
+    
+    /* Elegant Button */
+    .luxury-button {
+        font-family: var(--font-body);
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        font-size: 0.875rem;
+        padding: 1rem 2.5rem;
+        border-radius: 0.25rem;
+        transition: var(--transition-smooth);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .luxury-button-primary {
+        background: var(--luxury-black);
+        color: var(--luxury-white);
+        border: 1px solid var(--luxury-black);
+    }
+    
+    .luxury-button-primary:hover {
+        background: var(--luxury-gray-900);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-elegant);
+    }
+    
+    .luxury-button-gold {
+        background: var(--luxury-gold);
+        color: var(--luxury-black);
+        border: 1px solid var(--luxury-gold);
+    }
+    
+    .luxury-button-gold:hover {
+        background: var(--luxury-gold-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(212, 175, 55, 0.3);
+    }
+    
+    .luxury-button-outline {
+        background: transparent;
+        color: var(--luxury-black);
+        border: 1px solid var(--luxury-black);
+    }
+    
+    .luxury-button-outline:hover {
+        background: var(--luxury-black);
+        color: var(--luxury-white);
+    }
+    
+    /* Gold Accent Line */
+    .luxury-divider {
+        height: 1px;
+        background: linear-gradient(90deg, 
+            transparent 0%, 
+            var(--luxury-gold) 50%, 
+            transparent 100%
+        );
+        margin: var(--space-section) 0;
+    }
+    
+    /* Premium Input */
+    .luxury-input {
+        font-family: var(--font-body);
+        padding: 1rem 1.5rem;
+        border: 1px solid var(--luxury-gray-300);
+        border-radius: 0.25rem;
+        transition: var(--transition-smooth);
+        background: var(--luxury-white);
+        color: var(--luxury-gray-800);
+    }
+    
+    .luxury-input:focus {
+        outline: none;
+        border-color: var(--luxury-gold);
+        box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+    }
+    
+    /* Elegant Container */
+    .luxury-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 2rem;
+    }
+    
+    /* Premium Section */
+    .luxury-section {
+        padding: var(--space-section) 0;
+    }
+    
+    /* Sophisticated Glassmorphism */
+    .luxury-glass {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: var(--shadow-elegant);
+    }
+}
+
+/* Luxury Animations */
+@keyframes luxuryFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes luxurySlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-60px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes luxuryGlow {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 40px rgba(212, 175, 55, 0.4);
+    }
+}
+
+@layer utilities {
+    .animate-luxury-fade {
+        animation: luxuryFadeIn 1s cubic-bezier(0.25, 0.1, 0.25, 1);
+    }
+    
+    .animate-luxury-slide {
+        animation: luxurySlideIn 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .animate-luxury-glow {
+        animation: luxuryGlow 3s ease-in-out infinite;
+    }
+}
+
+/* =============================================
+   EXISTING STYLES BELOW
+   ============================================= */
+
 /* Custom Animations */
 @keyframes fadeIn {
     from {

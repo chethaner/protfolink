@@ -32,6 +32,8 @@ app.use('/api/ats', require('./routes/atsRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/jobs', require('./routes/jobRoutes'));
 app.use('/api/chatbot', require('./routes/chatbotRoutes'));
+app.use('/api/admin', require('./routes/admin'));
+app.use('/api/ml', require('./routes/ml'));
 
 app.get('/', (req, res) => {
     res.send('Portfolink API is running');
