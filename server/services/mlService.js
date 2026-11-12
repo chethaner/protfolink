@@ -4,7 +4,7 @@ const axios = require('axios');
 class MLService {
     constructor() {
         this.groqUrl = 'https://api.groq.com/openai/v1/chat/completions';
-        this.model = process.env.GROQ_MODEL || 'llama3-8b-8192';
+        this.model = process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
         this.apiKey = process.env.GROQ_API_KEY;
 
         // Common technical skills database (150+ skills)
