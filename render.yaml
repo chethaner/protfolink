@@ -19,7 +19,8 @@ services:
         sync: false
 
   # ── Frontend ── Static Site (always-on, CDN, no sleep, no Docker needed)
-  - type: static
+  - type: web
+    env: static
     name: portfolink-client
     plan: free
     rootDir: client
