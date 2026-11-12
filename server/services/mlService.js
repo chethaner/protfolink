@@ -168,7 +168,7 @@ class MLService {
     }
 
     /**
-     * Analyze skill gaps using Ollama
+     * Analyze skill gaps using Groq AI
      */
     async analyzeSkillGaps(userSkills, jobDescription) {
         try {
@@ -219,7 +219,7 @@ Respond in JSON format:
     }
 
     /**
-     * Generate personalized learning path using Ollama
+     * Generate personalized learning path using Groq AI
      */
     async generateLearningPath(currentSkills, targetRole, missingSkills) {
         try {
@@ -283,7 +283,7 @@ Respond in JSON format:
     }
 
     /**
-     * Generate career insights using Ollama
+     * Generate career insights using Groq AI
      */
     async generateCareerInsights(skills, experience, targetRole) {
         try {
@@ -344,20 +344,15 @@ Respond in JSON format:
     }
 
     /**
-     * Parse Groq response and extract JSON
+     * Parse Groq AI response and extract JSON
      */
     parseGroqResponse(response) {
         try {
-            // Try to find JSON in the response
             const jsonMatch = response.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                return JSON.parse(jsonMatch[0]);
-            }
-
-            // If no JSON found, return the raw response
+            if (jsonMatch) return JSON.parse(jsonMatch[0]);
             return { raw: response };
         } catch (error) {
-            console.error('Failed to parse Ollama response:', error);
+            console.error('Failed to parse Groq response:', error);
             return { raw: response };
         }
     }

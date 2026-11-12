@@ -232,7 +232,7 @@ Return ONLY the JSON object, no additional text.`;
 }
 
 // Kept for backward compatibility — no-op now
-async function checkOllama() {
+async function checkAI() {
     if (!GROQ_API_KEY) {
         console.log('⚠️  GROQ_API_KEY not set. AI features will be unavailable.');
         return false;
@@ -240,7 +240,7 @@ async function checkOllama() {
     console.log('✅ Groq API ready. Model:', GROQ_MODEL);
     return true;
 }
-checkOllama();
+checkAI();
 
 module.exports = {
     generateText,
@@ -250,5 +250,5 @@ module.exports = {
     generateMotivation,
     suggestJobs,
     analyzeSkillGaps,
-    checkOllama
+    checkAI
 };
