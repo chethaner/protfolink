@@ -3,8 +3,9 @@ const axios = require('axios');
 
 class MLService {
     constructor() {
-        this.ollamaUrl = 'http://localhost:11434/api/generate';
-        this.model = 'llama3.2';
+        this.groqUrl = 'https://api.groq.com/openai/v1/chat/completions';
+        this.model = process.env.GROQ_MODEL || 'llama3-8b-8192';
+        this.apiKey = process.env.GROQ_API_KEY;
 
         // Common technical skills database (150+ skills)
         this.technicalSkills = [
@@ -199,14 +200,17 @@ Respond in JSON format:
   "overallMatch": 75
 }`;
 
-            const response = await axios.post(this.ollamaUrl, {
+            const response = await axios.post(this.groqUrl, {
                 model: this.model,
-                prompt: prompt,
-                stream: false
+                messages: [{ role: 'user', content: prompt }],
+                temperature: 0.7,
+                max_tokens: 2048
+            }, {
+                headers: { 'Authorization': `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' },
+                timeout: 30000
             });
 
-            // Parse the response
-            const result = this.parseOllamaResponse(response.data.response);
+            const result = this.parseGroqResponse(response.data.choices[0].message.content);
             return result;
         } catch (error) {
             console.error('Skill gap analysis error:', error);
@@ -260,13 +264,17 @@ Respond in JSON format:
   "keyMilestones": ["milestone 1", "milestone 2"]
 }`;
 
-            const response = await axios.post(this.ollamaUrl, {
+            const response = await axios.post(this.groqUrl, {
                 model: this.model,
-                prompt: prompt,
-                stream: false
+                messages: [{ role: 'user', content: prompt }],
+                temperature: 0.7,
+                max_tokens: 2048
+            }, {
+                headers: { 'Authorization': `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' },
+                timeout: 30000
             });
 
-            const result = this.parseOllamaResponse(response.data.response);
+            const result = this.parseGroqResponse(response.data.choices[0].message.content);
             return result;
         } catch (error) {
             console.error('Learning path generation error:', error);
@@ -317,13 +325,17 @@ Respond in JSON format:
   ]
 }`;
 
-            const response = await axios.post(this.ollamaUrl, {
+            const response = await axios.post(this.groqUrl, {
                 model: this.model,
-                prompt: prompt,
-                stream: false
+                messages: [{ role: 'user', content: prompt }],
+                temperature: 0.7,
+                max_tokens: 2048
+            }, {
+                headers: { 'Authorization': `Bearer ${this.apiKey}`, 'Content-Type': 'application/json' },
+                timeout: 30000
             });
 
-            const result = this.parseOllamaResponse(response.data.response);
+            const result = this.parseGroqResponse(response.data.choices[0].message.content);
             return result;
         } catch (error) {
             console.error('Career insights generation error:', error);
@@ -332,9 +344,9 @@ Respond in JSON format:
     }
 
     /**
-     * Parse Ollama response and extract JSON
+     * Parse Groq response and extract JSON
      */
-    parseOllamaResponse(response) {
+    parseGroqResponse(response) {
         try {
             // Try to find JSON in the response
             const jsonMatch = response.match(/\{[\s\S]*\}/);

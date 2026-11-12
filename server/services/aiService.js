@@ -1,67 +1,36 @@
-// AI Service with Ollama Support (No external AI packages needed)
+// AI Service — powered by Groq API (free, no CC, fast)
 const axios = require('axios');
 
-// Ollama configuration
-const ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
-const ollamaModel = process.env.OLLAMA_MODEL || 'llama3.2:latest';
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const GROQ_MODEL = process.env.GROQ_MODEL || 'llama3-8b-8192';
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
-let ollamaAvailable = false;
-
-// Check Ollama availability
-async function checkOllama() {
-    try {
-        await axios.get(`${ollamaUrl}/api/tags`, { timeout: 2000 });
-        ollamaAvailable = true;
-        console.log('✅ Ollama is available at', ollamaUrl);
-        console.log('📦 Using model:', ollamaModel);
-        return true;
-    } catch (error) {
-        ollamaAvailable = false;
-        console.log('⚠️  Ollama not available. Install from https://ollama.ai');
-        return false;
-    }
-}
-
-// Initialize on startup
-checkOllama();
-
-// Generate text using Ollama
-async function generateWithOllama(prompt) {
-    try {
-        const response = await axios.post(`${ollamaUrl}/api/generate`, {
-            model: ollamaModel,
-            prompt: prompt,
-            stream: false
-        }, {
-            timeout: 120000 // 120 second timeout for slow Ollama responses
-        });
-        return response.data.response;
-    } catch (error) {
-        console.error('Ollama Generation Error:', error.message);
-        if (error.response) {
-            console.error('Ollama Response Status:', error.response.status);
-            console.error('Ollama Response Data:', error.response.data);
-        }
-        throw new Error(`Ollama error: ${error.message}`);
-    }
-}
-
-// Generic AI text generation
+// Generate text using Groq
 async function generateText(prompt, systemContext = '') {
-    const fullPrompt = systemContext ? `${systemContext}\n\n${prompt}` : prompt;
-
-    if (!ollamaAvailable) {
-        // Try to reconnect
-        await checkOllama();
-        if (!ollamaAvailable) {
-            throw new Error('Ollama is not available. Please install Ollama from https://ollama.ai and run: ollama pull ' + ollamaModel);
-        }
+    if (!GROQ_API_KEY) {
+        throw new Error('GROQ_API_KEY is not set. Get a free key at https://console.groq.com');
     }
 
-    return await generateWithOllama(fullPrompt);
+    const messages = [];
+    if (systemContext) messages.push({ role: 'system', content: systemContext });
+    messages.push({ role: 'user', content: prompt });
+
+    const response = await axios.post(GROQ_URL, {
+        model: GROQ_MODEL,
+        messages,
+        temperature: 0.7,
+        max_tokens: 2048
+    }, {
+        headers: {
+            'Authorization': `Bearer ${GROQ_API_KEY}`,
+            'Content-Type': 'application/json'
+        },
+        timeout: 30000
+    });
+
+    return response.data.choices[0].message.content;
 }
 
-// Improve text with AI
 // Improve text with AI
 async function improveText(text, instruction = 'improve') {
     const prompts = {
@@ -75,45 +44,27 @@ async function improveText(text, instruction = 'improve') {
     const prompt = prompts[instruction] || prompts.improve;
     const rawResponse = await generateText(prompt);
 
-    // For bullets, convert to HTML list
     if (instruction === 'bullets') {
-        // Check if response already has HTML tags
         if (rawResponse.includes('<ul>') || rawResponse.includes('<li>')) {
-            // Clean up and return
-            return rawResponse
-                .replace(/```html/g, '')
-                .replace(/```/g, '')
-                .replace(/^(Here is|Here's).*?:/gim, '')
-                .trim();
+            return rawResponse.replace(/```html/g, '').replace(/```/g, '').replace(/^(Here is|Here's).*?:/gim, '').trim();
         }
-
-        // Convert plain bullet points or text to HTML list
-        const lines = rawResponse
-            .split('\n')
-            .map(line => line.trim())
-            .filter(line => line.length > 0);
-
+        const lines = rawResponse.split('\n').map(line => line.trim()).filter(line => line.length > 0);
         const listItems = lines.map(line => {
-            // Remove bullet characters, markdown bold, and other formatting
             let text = line
-                .replace(/^[•\-\*\d\.]\s*/, '') // Remove bullets
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Convert **bold** to <strong>
-                .replace(/\*(.*?)\*/g, '<em>$1</em>') // Convert *italic* to <em>
+                .replace(/^[•\-\*\d\.]]\s*/, '')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
                 .trim();
             return `  <li>${text}</li>`;
         }).join('\n');
-
         return `<ul>\n${listItems}\n</ul>`;
     }
 
-    // For other actions, clean up and convert markdown formatting to HTML
-    let cleaned = rawResponse
+    return rawResponse
         .replace(/^(Here is|Here's|I've|I have).*?:/gim, '')
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Convert **bold** to <strong>
-        .replace(/\*(.*?)\*/g, '<em>$1</em>') // Convert *italic* to <em>
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
         .trim();
-
-    return cleaned;
 }
 
 // Generate career goal steps
@@ -149,9 +100,7 @@ Return ONLY the JSON array, no additional text.`;
 
     try {
         const jsonMatch = response.match(/\[[\s\S]*\]/);
-        if (jsonMatch) {
-            return JSON.parse(jsonMatch[0]);
-        }
+        if (jsonMatch) return JSON.parse(jsonMatch[0]);
         throw new Error('Invalid JSON response');
     } catch (error) {
         console.error('Failed to parse career steps:', error);
@@ -161,28 +110,11 @@ Return ONLY the JSON array, no additional text.`;
 
 function getFallbackSteps(goalTitle) {
     return [
-        {
-            title: "Research and Learn",
-            description: `Study the requirements and skills needed for ${goalTitle}`,
-            timeframe: "1-2 months",
-            resources: ["Online courses", "Industry blogs", "Professional networks"]
-        },
-        {
-            title: "Build Skills",
-            description: "Develop the necessary technical and soft skills",
-            timeframe: "3-6 months",
-            resources: ["Practice projects", "Certifications", "Mentorship"]
-        },
-        {
-            title: "Gain Experience",
-            description: "Apply your skills in real-world scenarios",
-            timeframe: "6-12 months",
-            resources: ["Freelance work", "Open source", "Internships"]
-        }
+        { title: "Research and Learn", description: `Study the requirements and skills needed for ${goalTitle}`, timeframe: "1-2 months", resources: ["Online courses", "Industry blogs", "Professional networks"] },
+        { title: "Build Skills", description: "Develop the necessary technical and soft skills", timeframe: "3-6 months", resources: ["Practice projects", "Certifications", "Mentorship"] },
+        { title: "Gain Experience", description: "Apply your skills in real-world scenarios", timeframe: "6-12 months", resources: ["Freelance work", "Open source", "Internships"] }
     ];
 }
-
-
 
 // Suggest skills for career goal
 async function suggestSkills(goalTitle, currentSkills = []) {
@@ -205,9 +137,7 @@ Return ONLY the JSON array, no additional text.`;
 
     try {
         const jsonMatch = response.match(/\[[\s\S]*\]/);
-        if (jsonMatch) {
-            return JSON.parse(jsonMatch[0]);
-        }
+        if (jsonMatch) return JSON.parse(jsonMatch[0]);
         throw new Error('Invalid JSON response');
     } catch (error) {
         console.error('Failed to parse skill suggestions:', error);
@@ -236,7 +166,6 @@ async function suggestJobs(portfolio) {
     const { personalInfo = {}, experience = [], education = [], projects = [], skills = [] } = content;
 
     const allSkills = skills.map(s => s.name || s).filter(Boolean);
-    const experienceYears = experience.length;
 
     const prompt = `Analyze this professional profile and suggest 3-5 suitable job roles:
 
@@ -244,7 +173,7 @@ Profile:
 - Name: ${personalInfo.fullName || 'Professional'}
 - Current Role: ${personalInfo.position || 'Not specified'}
 - Skills: ${allSkills.join(', ')}
-- Experience: ${experienceYears} positions
+- Experience: ${experience.length} positions
 - Education: ${education.map(e => e.degree).join(', ')}
 - Projects: ${projects.length} projects
 
@@ -267,23 +196,11 @@ Return ONLY the JSON array, no additional text.`;
 
     try {
         const jsonMatch = response.match(/\[[\s\S]*\]/);
-        if (jsonMatch) {
-            return JSON.parse(jsonMatch[0]);
-        }
+        if (jsonMatch) return JSON.parse(jsonMatch[0]);
         throw new Error('Invalid JSON response');
     } catch (error) {
         console.error('Failed to parse job suggestions:', error);
-        return [
-            {
-                jobTitle: "Software Developer",
-                matchScore: 75,
-                description: "Develop and maintain software applications",
-                requiredSkills: allSkills.slice(0, 5),
-                skillGaps: ["Advanced skills needed"],
-                salaryRange: "$60k - $100k",
-                careerPath: ["Junior Developer", "Mid-level Developer", "Senior Developer"]
-            }
-        ];
+        return [{ jobTitle: "Software Developer", matchScore: 75, description: "Develop and maintain software applications", requiredSkills: allSkills.slice(0, 5), skillGaps: ["Advanced skills needed"], salaryRange: "$60k - $100k", careerPath: ["Junior Developer", "Mid-level Developer", "Senior Developer"] }];
     }
 }
 
@@ -306,19 +223,24 @@ Return ONLY the JSON object, no additional text.`;
 
     try {
         const jsonMatch = response.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            return JSON.parse(jsonMatch[0]);
-        }
+        if (jsonMatch) return JSON.parse(jsonMatch[0]);
         throw new Error('Invalid JSON response');
     } catch (error) {
         console.error('Failed to parse skill gaps:', error);
-        return {
-            matchingSkills: userSkills.slice(0, 3),
-            missingSkills: ["Advanced skills"],
-            recommendations: ["Continue learning", "Build projects"]
-        };
+        return { matchingSkills: userSkills.slice(0, 3), missingSkills: ["Advanced skills"], recommendations: ["Continue learning", "Build projects"] };
     }
 }
+
+// Kept for backward compatibility — no-op now
+async function checkOllama() {
+    if (!GROQ_API_KEY) {
+        console.log('⚠️  GROQ_API_KEY not set. AI features will be unavailable.');
+        return false;
+    }
+    console.log('✅ Groq API ready. Model:', GROQ_MODEL);
+    return true;
+}
+checkOllama();
 
 module.exports = {
     generateText,
