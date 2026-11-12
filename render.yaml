@@ -1,9 +1,8 @@
 services:
-  # ── Backend ── Docker Web Service (free tier, sleeps after 15 min inactivity)
+  # ── Backend ── Docker Web Service (sleeps after 15 min inactivity on free account)
   - type: web
     name: portfolink-server
     runtime: docker
-    plan: free
     rootDir: server
     dockerfilePath: ./Dockerfile
     numInstances: 1
@@ -18,11 +17,10 @@ services:
       - key: JWT_SECRET
         sync: false
 
-  # ── Frontend ── Static Site (always-on, CDN, no sleep, no Docker needed)
+  # ── Frontend ── Static Site (always-on, CDN, no sleep)
   - type: web
     env: static
     name: portfolink-client
-    plan: free
     rootDir: client
     buildCommand: npm install && npm run build
     staticPublishPath: dist
