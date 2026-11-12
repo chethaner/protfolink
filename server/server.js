@@ -13,6 +13,8 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 const allowedOrigins = [
     'http://localhost:5173',
     process.env.CLIENT_URL,
+    /\.vercel\.app$/,
+    /\.koyeb\.app$/,
 ].filter(Boolean);
 
 app.use(cors({
