@@ -10,8 +10,13 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+const allowedOrigins = [
+    'http://localhost:5173',
+    process.env.CLIENT_URL,
+].filter(Boolean);
+
 app.use(cors({
-    origin: 'http://localhost:5173', // Vite default port
+    origin: allowedOrigins,
     credentials: true
 }));
 app.use(cookieParser());
@@ -39,7 +44,11 @@ app.get('/', (req, res) => {
     res.send('Portfolink API is running');
 });
 
-// Start Server
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+// Start Server (local dev only — Vercel uses module.exports)
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+}
+
+module.exports = app;
